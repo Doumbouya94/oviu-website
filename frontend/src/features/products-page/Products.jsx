@@ -1,5 +1,7 @@
+import ProductCatalogPage from "../../workspace-caodu/products/ProductCatalogPage";
+
 const Products = () => {
-  return <div>Products Working ✓</div>;
+  return <ProductCatalogPage />;
 };
 
 export default Products;
