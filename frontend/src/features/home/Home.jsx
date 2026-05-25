@@ -1,4 +1,6 @@
 import "./Home.css";
+import heroImg from "../../assets/photo_acceuil_1.png";
+import { Shield, Leaf, Truck } from "lucide-react";
 
 const Home = () => {
   return (
@@ -21,12 +23,38 @@ const Home = () => {
           </div>
         </div>
         <div className="hero-image">
-          {/* Remplace ce div par <img src={heroImg} alt="OVIU Products" /> quand tu as l'image */}
-          <div className="placeholder-image">Hero Image Coming Soon</div>
+          <img src={heroImg} alt="OVIU Products" className="hero-img" />
         </div>
+
+        {/* TRUST BAR */}
+        <div className="trust-bar">
+          <div className="trust-item">
+            <Shield size={28} strokeWidth={1.5} />
+            <div>
+              <strong>Premium Quality</strong>
+              <p>Made to last.</p>
+            </div>
+          </div>
+          <div className="trust-item">
+            <Leaf size={28} strokeWidth={1.5} />
+            <div>
+              <strong>Made in Canada</strong>
+              <p>Proudly local.</p>
+            </div>
+          </div>
+          <div className="trust-item">
+            <Truck size={28} strokeWidth={1.5} />
+            <div>
+              <strong>Fast Shipping</strong>
+              <p>On orders $99+</p>
+            </div>
+          </div>
+        </div>
+
       </section>
 
     </div>
-    );
-    }
+  );
+};
+
 export default Home;
