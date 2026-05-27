@@ -39,6 +39,12 @@ const galleryItems = [
   { id: 15, category: "3D Prints",        label: "3D Figure",        src: "https://placehold.co/600x700/d4c4a8/1a1a1a?text=3D+Figure" },
 ];
 
+const bestCustomerDesigns = [
+  { id: 1, productName: "Product Name", author: "Autor", src: "https://placehold.co/400x400/e8dfc9/1a1a1a?text=Customer+Design+1" },
+  { id: 2, productName: "Product Name", author: "Autor", src: "https://placehold.co/400x400/d4c4a8/1a1a1a?text=Customer+Design+2" },
+  { id: 3, productName: "Product Name", author: "Autor", src: "https://placehold.co/400x400/c9a96e/ffffff?text=Customer+Design+3" },
+];
+
 const INITIAL_VISIBLE = 10;
 
 const Gallery = () => {
@@ -128,9 +134,35 @@ const Gallery = () => {
           </button>
         </div>
       )}
-    </section>
 
-    // Best Customer Designs Section (TODO)
+      {/* ── Best Customer Designs ── */}
+      <div className="gallery__bcd">
+        <div className="gallery__bcd-header">
+          <h2 className="gallery__bcd-title">BEST CUSTOMER DESIGNS</h2>
+          <p className="gallery__bcd-subtitle">Designed by yourselves</p>
+        </div>
+
+        <div className="gallery__bcd-grid">
+          {bestCustomerDesigns.map((design) => (
+            <div key={design.id} className="gallery__bcd-card">
+              <div className="gallery__bcd-img-wrap">
+                <img
+                  src={design.src}
+                  alt={design.productName}
+                  className="gallery__bcd-img"
+                  loading="lazy"
+                />
+              </div>
+              <div className="gallery__bcd-info">
+                <span className="gallery__bcd-product">{design.productName}</span>
+                <span className="gallery__bcd-author">{design.author}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+    </section>
   );
 };
 
