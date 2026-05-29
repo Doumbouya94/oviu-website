@@ -2,22 +2,37 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import "./NavBar.css";
 import logo from "../../assets/OVIU_Logo.png";
+import { api, CART_UPDATED_EVENT } from "../../lib/api";
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
   const location = useLocation();
+
+  useEffect(() => {
+    const loadCartCount = async () => {
+      try {
+        const cart = await api.getCart();
+        setCartCount(cart.itemCount || 0);
+      } catch {
+        setCartCount(0);
+      }
+    };
+
+    loadCartCount();
+
+    const handleCartUpdate = () => loadCartCount();
+    window.addEventListener(CART_UPDATED_EVENT, handleCartUpdate);
+
+    return () => window.removeEventListener(CART_UPDATED_EVENT, handleCartUpdate);
+  }, [location.pathname]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
-
-  // Close mobile menu on route change
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [location]);
 
   const navLinks = [
     { label: "Home", to: "/" },
@@ -43,6 +58,7 @@ const Navbar = () => {
               <Link
                 to={to}
                 className={`navbar__link${location.pathname === to ? " navbar__link--active" : ""}`}
+                onClick={() => setMenuOpen(false)}
               >
                 {label}
               </Link>
@@ -50,9 +66,9 @@ const Navbar = () => {
           ))}
         </ul>
 
-        {/* CTA Button */}
-        <Link to="/order" className="navbar__cta">
-          Order
+        <Link to="/cart" className="navbar__cta navbar__cta--cart">
+          <span>Cart</span>
+          <span className="navbar__cart-count">{cartCount}</span>
         </Link>
 
         {/* Hamburger (mobile) */}
@@ -76,14 +92,20 @@ const Navbar = () => {
               <Link
                 to={to}
                 className={`navbar__drawer-link${location.pathname === to ? " navbar__drawer-link--active" : ""}`}
+                onClick={() => setMenuOpen(false)}
               >
                 {label}
               </Link>
             </li>
           ))}
           <li>
-            <Link to="/order" className="navbar__cta navbar__cta--mobile">
-              Order
+            <Link
+              to="/cart"
+              className="navbar__cta navbar__cta--mobile navbar__cta--cart"
+              onClick={() => setMenuOpen(false)}
+            >
+              <span>Cart</span>
+              <span className="navbar__cart-count">{cartCount}</span>
             </Link>
           </li>
         </ul>
