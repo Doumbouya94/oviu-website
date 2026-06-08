@@ -1,11 +1,20 @@
 import { useState } from "react";
 import "./Admin.css";
-import { LayoutDashboard, ShoppingBag, Package, BarChart2 } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, Package, BarChart2, LogOut } from "lucide-react";
 
-// Page principale du dashboard admin
-// J'utilise un state pour gérer quel onglet est actif
+// Identifiants admin codés en dur pour l'instant
+// À remplacer par une vraie authentification plus tard
+const ADMIN_EMAIL = "admin@oviu.ca";
+const ADMIN_PASSWORD = "oviu2025";
+
 const Admin = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Si pas connecté, on affiche la page de login
+  if (!isLoggedIn) {
+    return <LoginPage onLogin={setIsLoggedIn} />;
+  }
 
   return (
     <div className="admin">
@@ -14,7 +23,6 @@ const Admin = () => {
       <div className="admin-sidebar">
         <h2 className="admin-logo">OVIU Admin</h2>
         <nav className="admin-nav">
-          {/* Chaque bouton change l'onglet actif */}
           <button onClick={() => setActiveTab("dashboard")} className={activeTab === "dashboard" ? "active" : ""}>
             <LayoutDashboard size={16} /> Dashboard
           </button>
@@ -28,9 +36,14 @@ const Admin = () => {
             <BarChart2 size={16} /> Statistics
           </button>
         </nav>
+
+        {/* Bouton de déconnexion en bas de la sidebar */}
+        <button className="btn-logout" onClick={() => setIsLoggedIn(false)}>
+          <LogOut size={16} /> Log Out
+        </button>
       </div>
 
-      {/* Contenu principal — change selon l'onglet sélectionné */}
+      {/* Contenu principal */}
       <div className="admin-content">
         {activeTab === "dashboard" && <DashboardTab />}
         {activeTab === "orders" && <OrdersTab />}
@@ -42,11 +55,63 @@ const Admin = () => {
   );
 };
 
-// Vue d'ensemble — première chose qu'on voit en arrivant sur le dashboard
+// Page de connexion simple
+const LoginPage = ({ onLogin }) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const handleLogin = () => {
+    // On vérifie si les identifiants correspondent
+    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+      onLogin(true);
+      setError("");
+    } else {
+      setError("Invalid email or password. Please try again.");
+    }
+  };
+
+  return (
+    <div className="login-page">
+      <div className="login-card">
+        <h1 className="login-title">OVIU Admin</h1>
+        <p className="login-subtitle">Sign in to access the dashboard</p>
+
+        {/* Message d'erreur si mauvais identifiants */}
+        {error && <p className="login-error">{error}</p>}
+
+        <div className="login-form">
+          <div className="login-field">
+            <label>Email</label>
+            <input
+              type="email"
+              placeholder="admin@oviu.ca"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          <div className="login-field">
+            <label>Password</label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          <button className="btn-login" onClick={handleLogin}>
+            Sign In
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Vue d'ensemble
 const DashboardTab = () => (
   <div>
     <h1>Dashboard Overview</h1>
-    {/* 4 cartes de statistiques rapides */}
     <div className="stats-grid">
       <div className="stat-card">
         <h3>Total Orders</h3>
@@ -54,7 +119,6 @@ const DashboardTab = () => (
       </div>
       <div className="stat-card">
         <h3>Pending Orders</h3>
-        {/* En orange pour attirer l'attention */}
         <p className="stat-number pending">23</p>
       </div>
       <div className="stat-card">
@@ -69,8 +133,7 @@ const DashboardTab = () => (
   </div>
 );
 
-// Liste des commandes avec leur statut
-// Pour l'instant les données sont fictives, à connecter au backend plus tard
+// Liste des commandes
 const OrdersTab = () => {
   const orders = [
     { id: "#001", customer: "Jean Tremblay", product: "Custom T-Shirt", status: "pending", total: "$45.00" },
@@ -94,13 +157,11 @@ const OrdersTab = () => {
           </tr>
         </thead>
         <tbody>
-          {/* Je boucle sur les commandes pour afficher chaque ligne */}
           {orders.map(order => (
             <tr key={order.id}>
               <td>{order.id}</td>
               <td>{order.customer}</td>
               <td>{order.product}</td>
-              {/* La classe CSS change selon le statut pour colorer différemment */}
               <td><span className={`status ${order.status}`}>{order.status}</span></td>
               <td>{order.total}</td>
             </tr>
@@ -111,8 +172,7 @@ const OrdersTab = () => {
   );
 };
 
-// Gestion des produits avec les opérations de base (CRUD)
-// Le bouton delete et edit ne font rien pour l'instant, à connecter plus tard
+// Gestion des produits
 const ProductsTab = () => {
   const products = [
     { id: 1, name: "Custom T-Shirt", category: "Apparel", price: "$30.00", stock: 45 },
@@ -126,7 +186,6 @@ const ProductsTab = () => {
     <div>
       <div className="tab-header">
         <h1>Products</h1>
-        {/* Bouton pour ajouter un nouveau produit */}
         <button className="btn-add">+ Add Product</button>
       </div>
       <table className="admin-table">
@@ -147,7 +206,6 @@ const ProductsTab = () => {
               <td>{product.name}</td>
               <td>{product.category}</td>
               <td>{product.price}</td>
-              {/* Si le stock est bas (moins de 20) on le met en rouge */}
               <td className={product.stock < 20 ? "low-stock" : ""}>{product.stock}</td>
               <td>
                 <button className="btn-edit">Edit</button>
@@ -161,7 +219,7 @@ const ProductsTab = () => {
   );
 };
 
-// Statistiques globales — revenus, nouveaux clients, stock faible
+// Statistiques globales
 const StatsTab = () => (
   <div>
     <h1>Statistics</h1>
@@ -176,7 +234,6 @@ const StatsTab = () => (
       </div>
       <div className="stat-card">
         <h3>Low Stock Items</h3>
-        {/* 3 produits en stock faible, à surveiller */}
         <p className="stat-number pending">3</p>
       </div>
       <div className="stat-card">

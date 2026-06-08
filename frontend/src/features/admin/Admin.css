@@ -235,3 +235,113 @@
 .btn-delete:hover {
   background-color: #f5d5cc;
 }
+
+/* Page de login */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f0e8;
+}
+
+.login-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 48px;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+.login-title {
+  font-size: 28px;
+  font-weight: 800;
+  color: #1a1a1a;
+  font-family: Georgia, serif;
+  margin-bottom: 8px;
+}
+
+.login-subtitle {
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 32px;
+}
+
+.login-error {
+  background-color: #faece7;
+  color: #712b13;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.login-field label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+}
+
+.login-field input {
+  padding: 12px 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border 0.2s;
+}
+
+.login-field input:focus {
+  border-color: #1a1a1a;
+}
+
+.btn-login {
+  background-color: #1a1a1a;
+  color: #fff;
+  border: none;
+  padding: 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+  letter-spacing: 1px;
+}
+
+.btn-login:hover {
+  background-color: #333;
+}
+
+/* Bouton logout en bas de la sidebar */
+.btn-logout {
+  margin-top: auto;
+  background: transparent;
+  border: 1px solid #444;
+  color: #aaa;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.btn-logout:hover {
+  background-color: #2a2a2a;
+  color: #fff;
+}
