@@ -6,6 +6,9 @@
 
 import { useState } from "react";
 import "./Gallery.css";
+import { useLang } from "../../context/LanguageContext";
+import { t } from "../../translations/translations.js";
+import Footer from "../../components/layouts/Footer";
 
 const categories = [
   "All",
@@ -20,7 +23,6 @@ const categories = [
   "Custom T-Shirts",
 ];
 
-// Placeholder items — swap src for real product photos when client sends them
 const galleryItems = [
   { id: 1,  category: "Hoodies",          label: "Hoodies",          src: "https://placehold.co/600x700/1a1a1a/ffffff?text=Hoodie" },
   { id: 2,  category: "T-Shirts",         label: "T-Shirts",         src: "https://placehold.co/600x700/f5f0e8/1a1a1a?text=T-Shirt" },
@@ -51,6 +53,8 @@ const Gallery = () => {
   const [active, setActive]       = useState("All");
   const [visible, setVisible]     = useState(INITIAL_VISIBLE);
   const [hoveredId, setHoveredId] = useState(null);
+  const { lang } = useLang();
+  const g = t.gallery;
 
   const filtered =
     active === "All"
@@ -69,11 +73,8 @@ const Gallery = () => {
     <section className="gallery">
       {/* ── Header ── */}
       <div className="gallery__header">
-        <h1 className="gallery__title">GALLERY / PORTFOLIO</h1>
-        <p className="gallery__desc">
-          Explore our <em>latest</em> custom creations. Every piece is made with
-          passion, quality, and your unique story.
-        </p>
+        <h1 className="gallery__title">{g.title[lang]}</h1>
+        <p className="gallery__desc">{g.desc[lang]}</p>
       </div>
 
       {/* ── Category Filter ── */}
@@ -98,10 +99,8 @@ const Gallery = () => {
             onMouseEnter={() => setHoveredId(item.id)}
             onMouseLeave={() => setHoveredId(null)}
           >
-            {/* Category badge */}
             <span className="gallery__badge">{item.label}</span>
 
-            {/* Image */}
             <img
               src={item.src}
               alt={item.label}
@@ -109,14 +108,13 @@ const Gallery = () => {
               loading="lazy"
             />
 
-            {/* Hover overlay */}
             <div className={`gallery__overlay${hoveredId === item.id ? " gallery__overlay--visible" : ""}`}>
               <button className="gallery__view-btn">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                   <circle cx="12" cy="12" r="3"/>
                 </svg>
-                View
+                {g.viewBtn[lang]}
               </button>
             </div>
           </div>
@@ -130,7 +128,7 @@ const Gallery = () => {
             className="gallery__load-btn"
             onClick={() => setVisible((v) => v + INITIAL_VISIBLE)}
           >
-            LOAD MORE
+            {g.loadMore[lang]}
           </button>
         </div>
       )}
@@ -138,8 +136,8 @@ const Gallery = () => {
       {/* ── Best Customer Designs ── */}
       <div className="gallery__bcd">
         <div className="gallery__bcd-header">
-          <h2 className="gallery__bcd-title">BEST CUSTOMER DESIGNS</h2>
-          <p className="gallery__bcd-subtitle">Designed by yourselves</p>
+          <h2 className="gallery__bcd-title">{g.bcdTitle[lang]}</h2>
+          <p className="gallery__bcd-subtitle">{g.bcdSubtitle[lang]}</p>
         </div>
 
         <div className="gallery__bcd-grid">
@@ -162,6 +160,7 @@ const Gallery = () => {
         </div>
       </div>
 
+      <Footer />
     </section>
   );
 };
