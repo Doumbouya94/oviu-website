@@ -1,0 +1,247 @@
+.faq {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 4rem 2rem 6rem;
+}
+
+/* ── Header ── */
+.faq__header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.faq__title {
+    font-family: "Georgia", serif;
+    font-size: clamp(1.7rem, 4vw, 2.4rem);
+    font-weight: 700;
+    color: #1a1a1a;
+    letter-spacing: 0.01em;
+    margin-bottom: 0.75rem;
+}
+
+.faq__subtitle {
+    font-size: 0.95rem;
+    color: #666;
+    line-height: 1.7;
+}
+
+.faq__link {
+    color: #c9a96e;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.2s ease;
+}
+
+.faq__link:hover {
+    color: #1a1a1a;
+}
+
+/* ── Tabs ── */
+.faq__tabs {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 2.5rem;
+}
+
+.faq__tab {
+    padding: 0.45rem 1.2rem;
+    border: 1.5px solid #d4c4a8;
+    border-radius: 999px;
+    background: #fff;
+    color: #3a3a3a;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.faq__tab:hover {
+    border-color: #c9a96e;
+    color: #1a1a1a;
+}
+
+.faq__tab--active {
+    background: #1a1a1a;
+    border-color: #1a1a1a;
+    color: #fff;
+}
+
+/* ── Accordion list ── */
+.faq__list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+/* ── Accordion item ── */
+.faq__item {
+    border-bottom: 1px solid #e8e0d5;
+}
+
+.faq__item:first-child {
+    border-top: 1px solid #e8e0d5;
+}
+
+/* ── Question button ── */
+.faq__question {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 1.1rem 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+}
+
+.faq__icon {
+    flex-shrink: 0;
+    color: #888;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 1.5px solid #e0d8cf;
+    border-radius: 8px;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.faq__item--open .faq__icon {
+    border-color: #c9a96e;
+    color: #c9a96e;
+}
+
+.faq__question-text {
+    flex: 1;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    line-height: 1.4;
+}
+
+.faq__chevron {
+    flex-shrink: 0;
+    color: #aaa;
+    transition: transform 0.3s ease, color 0.2s;
+    display: flex;
+}
+
+.faq__chevron--up {
+    transform: rotate(180deg);
+    color: #c9a96e;
+}
+
+/* ── Answer ── */
+.faq__answer-wrapper {
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+}
+
+.faq__answer {
+    padding: 0 0 1.2rem 2.85rem;
+    font-size: 0.9rem;
+    color: #555;
+    line-height: 1.7;
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+    .faq {
+        padding: 2.5rem 1rem 4rem;
+    }
+
+    .faq__answer {
+        padding-left: 0;
+    }
+}
+
+/* ── Rich answer (3D print pricing) ── */
+.faq__answer--rich {
+    padding: 0 0 1.4rem 2.85rem;
+}
+
+.faq__answer-text {
+    font-size: 0.9rem;
+    color: #555;
+    line-height: 1.7;
+    margin-bottom: 0.5rem;
+}
+
+.faq__answer-text--fr {
+    font-size: 0.82rem;
+    color: #888;
+    font-style: italic;
+    margin-bottom: 1.1rem;
+}
+
+.faq__answer-text strong {
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+/* Formula box */
+.faq__formula-box {
+    background: #f5f0e8;
+    border-left: 3px solid #c9a96e;
+    border-radius: 6px;
+    padding: 0.85rem 1.1rem;
+    margin-bottom: 1.2rem;
+}
+
+.faq__formula-label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #c9a96e;
+    margin-bottom: 0.3rem;
+}
+
+.faq__formula {
+    font-family: "Georgia", serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 0.4rem;
+}
+
+.faq__formula-note {
+    font-size: 0.82rem;
+    color: #666;
+    line-height: 1.5;
+}
+
+.faq__formula-note strong {
+    color: #1a1a1a;
+}
+
+/* Chart image */
+.faq__chart-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.6rem;
+}
+
+.faq__chart-img {
+    width: 100%;
+    max-width: 560px;
+    border-radius: 8px;
+    border: 1px solid #e8e0d5;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.07);
+    display: block;
+}
+
+@media (max-width: 600px) {
+    .faq__answer--rich {
+        padding-left: 0;
+    }
+}

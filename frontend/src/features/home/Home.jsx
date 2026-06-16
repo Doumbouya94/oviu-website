@@ -1,25 +1,30 @@
 import "./Home.css";
 import heroImg from "../../assets/photo_acceuil_1.png";
 import { Shield, Leaf, Truck } from "lucide-react";
+import { useLang } from "../../context/LanguageContext";
+import { t } from "../../translations/translations.js";
 
 const Home = () => {
+  const { lang } = useLang();
+  const h = t.home;
+
   return (
     <div className="home">
 
       {/* TOP BANNER */}
       <div className="top-banner">
-        Proudly Canadian 🇨🇦
+        {h.banner[lang]}
       </div>
 
       {/* HERO SECTION */}
       <section className="hero">
         <div className="hero-text">
-          <h1>Turn Your Ideas Into <span>Meaningful Products.</span></h1>
-          <p>Custom Apparel • 3D Prints • Creative Gifts</p>
-          <p>Made in Canada 🇨🇦</p>
+          <h1>{h.heading1[lang]} <span>{h.heading2[lang]}</span></h1>
+          <p>{h.sub1[lang]}</p>
+          <p>{h.sub2[lang]}</p>
           <div className="hero-buttons">
-            <a href="/order" className="btn-primary">START YOUR CUSTOM ORDER</a>
-            <a href="/products" className="btn-secondary">EXPLORE PRODUCTS</a>
+            <a href="/order" className="btn-primary">{h.btnOrder[lang]}</a>
+            <a href="/products" className="btn-secondary">{h.btnExplore[lang]}</a>
           </div>
         </div>
         <div className="hero-image">
@@ -31,22 +36,22 @@ const Home = () => {
           <div className="trust-item">
             <Shield size={28} strokeWidth={1.5} />
             <div>
-              <strong>Premium Quality</strong>
-              <p>Made to last.</p>
+              <strong>{h.trustQuality[lang]}</strong>
+              <p>{h.trustQualitySub[lang]}</p>
             </div>
           </div>
           <div className="trust-item">
             <Leaf size={28} strokeWidth={1.5} />
             <div>
-              <strong>Made in Canada</strong>
-              <p>Proudly local.</p>
+              <strong>{h.trustCanada[lang]}</strong>
+              <p>{h.trustCanadaSub[lang]}</p>
             </div>
           </div>
           <div className="trust-item">
             <Truck size={28} strokeWidth={1.5} />
             <div>
-              <strong>Fast Shipping</strong>
-              <p>On orders $99+</p>
+              <strong>{h.trustShipping[lang]}</strong>
+              <p>{h.trustShippingSub[lang]}</p>
             </div>
           </div>
         </div>
