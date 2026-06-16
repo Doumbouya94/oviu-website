@@ -2,24 +2,17 @@ import { useState } from "react";
 import "./Admin.css";
 import { LayoutDashboard, ShoppingBag, Package, BarChart2, LogOut } from "lucide-react";
 
-// Identifiants admin codés en dur pour l'instant
-// À remplacer par une vraie authentification plus tard
-const ADMIN_EMAIL = "admin@oviu.ca";
-const ADMIN_PASSWORD = "oviu2025";
-
 const Admin = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // If the user is already logged in (token exists), we set isLoggedIn to true, otherwise false
+  const [isLoggedIn, setIsLoggedIn] = useState(!!localStorage.getItem("adminToken"));
 
-  // Si pas connecté, on affiche la page de login
   if (!isLoggedIn) {
     return <LoginPage onLogin={setIsLoggedIn} />;
   }
 
   return (
     <div className="admin">
-
-      {/* Barre latérale avec la navigation */}
       <div className="admin-sidebar">
         <h2 className="admin-logo">OVIU Admin</h2>
         <nav className="admin-nav">
@@ -37,37 +30,63 @@ const Admin = () => {
           </button>
         </nav>
 
-        {/* Bouton de déconnexion en bas de la sidebar */}
-        <button className="btn-logout" onClick={() => setIsLoggedIn(false)}>
+        {/* Close the session and eliminate the token */}
+        <button className="btn-logout" onClick={() => {
+          localStorage.removeItem("adminToken");
+          setIsLoggedIn(false);
+        }}>
           <LogOut size={16} /> Log Out
         </button>
       </div>
 
-      {/* Contenu principal */}
       <div className="admin-content">
         {activeTab === "dashboard" && <DashboardTab />}
         {activeTab === "orders" && <OrdersTab />}
         {activeTab === "products" && <ProductsTab />}
         {activeTab === "stats" && <StatsTab />}
       </div>
-
     </div>
   );
 };
 
-// Page de connexion simple
 const LoginPage = ({ onLogin }) => {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = () => {
-    // On vérifie si les identifiants correspondent
-    if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    if (!identifier || !password) {
+      setError("Please fill in all fields.");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ identifier, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Invalid credentials.");
+      }
+
+      // Save the token in localStorage
+      localStorage.setItem("adminToken", data.data.token);
       onLogin(true);
-      setError("");
-    } else {
-      setError("Invalid email or password. Please try again.");
+    } catch (err) {
+      setError(err.message || "An error occurred during login.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -77,17 +96,17 @@ const LoginPage = ({ onLogin }) => {
         <h1 className="login-title">OVIU Admin</h1>
         <p className="login-subtitle">Sign in to access the dashboard</p>
 
-        {/* Message d'erreur si mauvais identifiants */}
         {error && <p className="login-error">{error}</p>}
 
-        <div className="login-form">
+        <form onSubmit={handleLogin} className="login-form">
           <div className="login-field">
-            <label>Email</label>
+            <label>Email or Username</label>
             <input
-              type="email"
+              type="text"
               placeholder="admin@oviu.ca"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
+              disabled={isLoading}
             />
           </div>
           <div className="login-field">
@@ -97,12 +116,13 @@ const LoginPage = ({ onLogin }) => {
               placeholder="••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoading}
             />
           </div>
-          <button className="btn-login" onClick={handleLogin}>
-            Sign In
+          <button type="submit" className="btn-login" disabled={isLoading}>
+            {isLoading ? "Signing In..." : "Sign In"}
           </button>
-        </div>
+        </form>
       </div>
     </div>
   );
