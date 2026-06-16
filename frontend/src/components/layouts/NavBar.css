@@ -92,9 +92,24 @@
     transform: scaleX(1);
 }
 
-/* ---- CTA Button ---- */
+/* ---- Navbar Right Container ---- */
+.navbar__right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-left: 0;
+}
+
+@media (max-width: 768px) {
+    .navbar__right {
+        display: none;
+    }
+}
+
 .navbar__cta {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     padding: 0.5rem 1.25rem;
     background-color: #1a1a1a;
     color: #ffffff;
@@ -105,14 +120,28 @@
     white-space: nowrap;
     transition: background-color 0.2s ease, transform 0.15s ease;
     flex-shrink: 0;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    height: 36px;
+    box-sizing: border-box;
+}
+
+.navbar__cta:hover {
+    background-color: #c9a96e;
+    transform: translateY(-1px);
 }
 
 .navbar__cta--cart {
-    display: inline-flex;
-    align-items: center;
     gap: 0.55rem;
 }
 
+
+.navbar__cta--lang {
+    min-width: 55px;
+}
+
+/* ---- Cart Counter ---- */
 .navbar__cart-count {
     min-width: 1.4rem;
     height: 1.4rem;
@@ -126,12 +155,7 @@
     padding: 0 0.35rem;
 }
 
-.navbar__cta:hover {
-    background-color: #c9a96e;
-    transform: translateY(-1px);
-}
-
-/* ---- Hamburger (mobile) ---- */
+/* ---- Hamburger (Mobile) ---- */
 .navbar__hamburger {
     display: none;
     flex-direction: column;
@@ -179,7 +203,7 @@
 }
 
 .navbar__drawer--open {
-    max-height: 400px;
+    max-height: 460px;
     border-top-color: #e8e0d5;
 }
 
@@ -207,22 +231,15 @@
 
 .navbar__cta--mobile {
     margin-top: 0.5rem;
-    display: inline-block;
+    display: inline-flex;
+    justify-content: center;
+    width: auto;
 }
 
 /* ---- Responsive ---- */
 @media (max-width: 768px) {
     .navbar__links {
         display: none;
-    }
-
-    .navbar__cta:not(.navbar__cta--mobile) {
-        display: none;
-    }
-
-    .navbar__cta--mobile {
-        display: inline-flex;
-        justify-content: center;
     }
 
     .navbar__hamburger {
