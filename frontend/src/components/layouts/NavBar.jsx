@@ -43,20 +43,22 @@ const Navbar = () => {
     { label: t.nav.products[lang], to: "/products" },
     { label: t.nav.gallery[lang],  to: "/gallery" },
     { label: t.nav.contact[lang],  to: "/contact" },
-  ];
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]),];
+
+ 
 
   const toggleLang = () => setLang((prev) => (prev === "en" ? "fr" : "en"));
 
   return (
     <nav className={`navbar${scrolled ? " navbar--scrolled" : ""}`}>
       <div className="navbar__container">
-        {/* Logo */}
         <Link to="/" className="navbar__logo">
           <img src={logo} alt="OVIU logo icon" className="navbar__logo-icon" />
           <span className="navbar__logo-text">OVIU</span>
         </Link>
 
-        {/* Desktop links */}
         <ul className="navbar__links">
           {navLinks.map(({ label, to }) => (
             <li key={to}>
@@ -64,6 +66,7 @@ const Navbar = () => {
                 to={to}
                 className={`navbar__link${location.pathname === to ? " navbar__link--active" : ""}`}
                 onClick={() => setMenuOpen(false)}
+            
               >
                 {label}
               </Link>
@@ -87,8 +90,10 @@ const Navbar = () => {
             <span className="navbar__cart-count">{cartCount}</span>
           </Link>
         </div>
+        <Link to="/order" className="navbar__cta">
+          Order
+        </Link>
 
-        {/* Hamburger (mobile) */}
         <button
           className={`navbar__hamburger${menuOpen ? " open" : ""}`}
           onClick={() => setMenuOpen((prev) => !prev)}
@@ -101,7 +106,6 @@ const Navbar = () => {
         </button>
       </div>
 
-      {/* Mobile drawer */}
       <div className={`navbar__drawer${menuOpen ? " navbar__drawer--open" : ""}`}>
         <ul className="navbar__drawer-links">
           {navLinks.map(({ label, to }) => (
