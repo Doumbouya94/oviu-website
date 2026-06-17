@@ -1,11 +1,13 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+dotenv.config();
+
 import mongoose from "mongoose";
 import connectDB from "./config/db.js";
 import { login } from "./controllers/authController.js";
+import ProductRoutes from "./routes/productRoutes.js";
 
-dotenv.config();
 connectDB();
 
 const app = express();
@@ -112,6 +114,9 @@ app.use(express.json());
 // Authentication routes
 app.post("/api/auth/login", login);
 
+// Product routes
+app.use("/api/products", ProductRoutes);
+
 const findProduct = (productId) =>
   products.find((product) => product.id === Number(productId));
 
@@ -139,9 +144,9 @@ app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
 });
 
-app.get("/api/products", (_req, res) => {
-  res.json({ products });
-});
+// app.get("/api/products", (_req, res) => {
+//   res.json({ products });
+// });
 
 app.get("/api/cart", (_req, res) => {
   const summary = getCartSummary();

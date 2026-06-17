@@ -1,0 +1,545 @@
+.pf-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    z-index: 1000;
+    padding: 40px 20px;
+    overflow-y: auto;
+}
+
+/* Modal shell Wide panel, white, rounded. Max-width keeps it readable on large screens. */
+.pf-modal {
+    background: #fff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 760px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+/* Header  */
+.pf-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 28px 32px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.pf-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #1a1a1a;
+    font-family: Georgia, serif;
+    margin: 0 0 4px;
+}
+
+.pf-subtitle {
+    font-size: 13px;
+    color: #888;
+    margin: 0;
+}
+
+.pf-close {
+    background: #f5f5f5;
+    border: none;
+    border-radius: 8px;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #555;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+.pf-close:hover {
+    background: #eee;
+    color: #1a1a1a;
+}
+
+/* Error banner  */
+.pf-error {
+    margin: 0 32px;
+    padding: 12px 16px;
+    background: #faece7;
+    color: #712b13;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-top: 16px;
+}
+
+/* Body scroll area */
+.pf-body {
+    padding: 24px 32px 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+}
+
+/* Section title */
+.pf-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: #999;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 8px;
+    margin: 4px 0 0;
+}
+
+/* Generic field wrapper  */
+.pf-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+.pf-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #444;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+/* Input base */
+.pf-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #1a1a1a;
+    background: #fff;
+    outline: none;
+    transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+
+.pf-input:focus {
+    border-color: #1a1a1a;
+}
+
+.pf-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Select wrapper (custom chevron) ─ */
+.pf-select-wrap {
+    position: relative;
+    flex: 1;
+}
+
+.pf-select {
+    appearance: none;
+    padding-right: 30px;
+    cursor: pointer;
+}
+
+.pf-select-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #888;
+    pointer-events: none;
+}
+
+/* Hint text  */
+.pf-hint {
+    font-size: 11px;
+    color: #aaa;
+}
+
+.pf-hint--block {
+    display: block;
+    margin-top: -10px;
+}
+
+/* Horizontal row of fields  */
+.pf-row {
+    display: flex;
+    gap: 16px;
+    align-items: flex-end;
+}
+
+/* Active / Inactive toggle  */
+.pf-toggle-row {
+    display: flex;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.pf-toggle-btn {
+    flex: 1;
+    padding: 10px 12px;
+    border: none;
+    background: transparent;
+    font-size: 13px;
+    cursor: pointer;
+    color: #777;
+    transition: background 0.15s, color 0.15s;
+}
+
+.pf-toggle-btn.active {
+    background: #1a1a1a;
+    color: #fff;
+    font-weight: 600;
+}
+
+/* Size chips */
+.pf-size-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.pf-size-chip {
+    padding: 8px 16px;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    background: #fff;
+    color: #555;
+    transition: all 0.15s;
+}
+
+.pf-size-chip:hover {
+    border-color: #999;
+    color: #1a1a1a;
+}
+
+.pf-size-chip.selected {
+    background: #1a1a1a;
+    border-color: #1a1a1a;
+    color: #fff;
+}
+
+/* Bilingual inputs */
+.pf-bilingual {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pf-bilingual-row {
+    display: flex;
+    gap: 12px;
+}
+
+.pf-bilingual-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.pf-lang-badge {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    color: #888;
+    text-transform: uppercase;
+}
+
+/* Colors  */
+.pf-color-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.pf-color-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.pf-color-swatch-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.pf-color-picker {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 2px;
+    background: transparent;
+}
+
+.pf-color-hex {
+    font-size: 12px;
+    color: #666;
+    font-family: monospace;
+    width: 58px;
+    flex-shrink: 0;
+}
+
+/* Variants ─ */
+.pf-variants-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pf-variant-header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 80px 32px;
+    gap: 10px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0 2px;
+}
+
+.pf-variant-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 80px 32px;
+    gap: 10px;
+    align-items: center;
+}
+
+/* Add row buttons  */
+.pf-add-row-btn {
+    align-self: flex-start;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: 1.5px dashed #ccc;
+    border-radius: 8px;
+    background: transparent;
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-top: -8px;
+}
+
+.pf-add-row-btn:hover {
+    border-color: #999;
+    color: #1a1a1a;
+    background: #fafafa;
+}
+
+/* Icon buttons  */
+.pf-icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s;
+}
+
+.pf-icon-btn--danger {
+    background: #faece7;
+    color: #712b13;
+}
+
+.pf-icon-btn--danger:hover {
+    background: #f5d5cc;
+}
+
+/* Image upload zone ─ */
+.pf-upload-zone {
+    border: 2px dashed #ddd;
+    border-radius: 12px;
+    padding: 32px;
+    text-align: center;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: border-color 0.2s, background 0.2s;
+    color: #888;
+    font-size: 13px;
+}
+
+.pf-upload-zone:hover {
+    border-color: #aaa;
+    background: #fafafa;
+}
+
+.pf-upload-icon {
+    color: #bbb;
+}
+
+/* Image previews ─ */
+.pf-image-previews {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.pf-preview-wrap {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #eee;
+}
+
+.pf-preview-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.pf-preview-remove {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+
+.pf-preview-remove:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+/* Footer  */
+.pf-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 20px 32px 28px;
+    border-top: 1px solid #eee;
+    margin-top: 8px;
+}
+
+.pf-btn-cancel {
+    background: transparent;
+    border: 1px solid #ddd;
+    color: #555;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.pf-btn-cancel:hover {
+    background: #f5f5f5;
+}
+
+.pf-btn-submit {
+    background: #1a1a1a;
+    color: #fff;
+    border: none;
+    padding: 10px 28px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: background 0.2s;
+}
+
+.pf-btn-submit:hover:not(:disabled) {
+    background: #333;
+}
+
+.pf-btn-submit:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* Success state */
+.pf-success {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 32px;
+    gap: 16px;
+    text-align: center;
+    color: #2e8a5e;
+}
+
+.pf-success-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #e1f5ee;
+    color: #2e8a5e;
+    font-size: 24px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pf-success p {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0;
+    color: #1a1a1a;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .pf-overlay {
+        padding: 0;
+        align-items: flex-end;
+    }
+
+    .pf-modal {
+        border-radius: 16px 16px 0 0;
+        max-width: 100%;
+    }
+
+    .pf-row {
+        flex-direction: column;
+    }
+
+    .pf-bilingual-row {
+        flex-direction: column;
+    }
+
+    .pf-variant-row,
+    .pf-variant-header {
+        grid-template-columns: 1fr 1fr 64px 28px;
+    }
+}

@@ -1,4 +1,4 @@
-import Product from "../models/Product.js";
+import Product from "../models/Products.js";
 import cloudinary from "../config/cloudinary.js";
 
 // GET ALL PRODUCTS
@@ -75,6 +75,7 @@ export const createProduct = async (req, res) => {
 
     res.status(201).json(product);
   } catch (error) {
+    console.error("createProduct error:", error);
     res
       .status(500)
       .json({ message: "Failed to create product", error: error.message });

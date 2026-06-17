@@ -1,6 +1,7 @@
 import { useState } from "react";
-import "./Admin.css";
 import { LayoutDashboard, ShoppingBag, Package, BarChart2, LogOut } from "lucide-react";
+import "./Admin.css";
+import ProductForm from "./Product-Form";
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -194,20 +195,49 @@ const OrdersTab = () => {
 
 // Gestion des produits
 const ProductsTab = () => {
-  const products = [
+  const [showForm, setShowForm] = useState(false);
+  const [products, setProducts] = useState([
     { id: 1, name: "Custom T-Shirt", category: "Apparel", price: "$30.00", stock: 45 },
-    { id: 2, name: "Hoodie", category: "Apparel", price: "$90.00", stock: 20 },
-    { id: 3, name: "Tote Bag", category: "Accessories", price: "$25.00", stock: 60 },
-    { id: 4, name: "Mug", category: "Accessories", price: "$18.00", stock: 80 },
-    { id: 5, name: "3D Accessory", category: "3D Prints", price: "$35.00", stock: 15 },
-  ];
+    { id: 2, name: "Hoodie",         category: "Apparel", price: "$90.00", stock: 20 },
+    { id: 3, name: "Tote Bag",       category: "Accessories", price: "$25.00", stock: 60 },
+    { id: 4, name: "Mug",            category: "Accessories", price: "$18.00", stock: 80 },
+    { id: 5, name: "3D Accessory",   category: "3D Prints",   price: "$35.00", stock: 15 },
+  ]);
+
+  // Called by ProductForm on successful creation
+  const handleProductCreated = (newProduct) => {
+    setProducts((prev) => [
+      {
+        id:       newProduct._id,
+        name:     newProduct.name.en,
+        category: newProduct.category,
+        price:    `$${Number(newProduct.price).toFixed(2)}`,
+        stock:    newProduct.variants.reduce((sum, v) => sum + v.stock, 0),
+      },
+      ...prev,
+    ]);
+  };
 
   return (
     <div>
+      {/* Modal renders on top of everything when open */}
+      {showForm && (
+        <ProductForm
+          onClose={() => setShowForm(false)}
+          onSuccess={(product) => {
+            handleProductCreated(product);
+            setShowForm(false);
+          }}
+        />
+      )}
+
       <div className="tab-header">
         <h1>Products</h1>
-        <button className="btn-add">+ Add Product</button>
+        <button className="btn-add" onClick={() => setShowForm(true)}>
+          + Add Product
+        </button>
       </div>
+
       <table className="admin-table">
         <thead>
           <tr>
@@ -220,7 +250,7 @@ const ProductsTab = () => {
           </tr>
         </thead>
         <tbody>
-          {products.map(product => (
+          {products.map((product) => (
             <tr key={product.id}>
               <td>{product.id}</td>
               <td>{product.name}</td>

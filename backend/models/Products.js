@@ -20,7 +20,16 @@ const productSchema = new mongoose.Schema(
 
     category: {
       type: String,
-      enum: ["tshirt", "hoodie", "other"],
+      enum: [
+        "tshirt",
+        "hoodie",
+        "tote",
+        "mug",
+        "sticker",
+        "keychain",
+        "print3D",
+        "other",
+      ],
       required: true,
     },
 
@@ -28,7 +37,10 @@ const productSchema = new mongoose.Schema(
       {
         url: { type: String, required: true },
         publicId: { type: String, required: true },
-        altText: bilingualField,
+        altText: {
+          en: { type: String, trim: true, default: "" },
+          fr: { type: String, trim: true, default: "" },
+        },
       },
     ],
 
@@ -60,11 +72,26 @@ const productSchema = new mongoose.Schema(
 
     // Bilingual fields for neckType and vNeckDepth labels (ej. "Round Neck" / "Col rond", "Shallow V-Neck" / "Col en V peu profond")
     vNeckDepthLabels: {
-      shallow: { ...bilingualField, default: undefined },
-      classic: { ...bilingualField, default: undefined },
-      medium: { ...bilingualField, default: undefined },
-      deep: { ...bilingualField, default: undefined },
-      plunging: { ...bilingualField, default: undefined },
+      shallow: {
+        en: { type: String, trim: true },
+        fr: { type: String, trim: true },
+      },
+      classic: {
+        en: { type: String, trim: true },
+        fr: { type: String, trim: true },
+      },
+      medium: {
+        en: { type: String, trim: true },
+        fr: { type: String, trim: true },
+      },
+      deep: {
+        en: { type: String, trim: true },
+        fr: { type: String, trim: true },
+      },
+      plunging: {
+        en: { type: String, trim: true },
+        fr: { type: String, trim: true },
+      },
     },
 
     variants: [
