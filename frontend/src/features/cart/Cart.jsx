@@ -212,12 +212,13 @@ const Cart = () => {
                 />
               </label>
               <button
-                type="submit"
-                className="cart-summary__checkout"
-                disabled={placingOrder || cart.items.length === 0}
-              >
-                {placingOrder ? c.placingOrder[lang] : c.placeOrder[lang]}
-              </button>
+                    type="button"
+                    className="cart-summary__checkout"
+                    disabled={cart.items.length === 0}
+                    onClick={() => window.location.href = '/payment'}
+                    >
+                    {c.placeOrder[lang]}
+</button>
             </form>
             <button type="button" className="cart-summary__clear" onClick={clearCart}>
               {c.clearCart[lang]}
