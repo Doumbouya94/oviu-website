@@ -1,0 +1,47 @@
+/* FOOTER */
+.contact-footer {
+    background: #000;
+    color: #fff;
+    padding: 55px 50px 35px;
+    display: grid;
+    grid-template-columns: 1.3fr 1fr 1fr 1fr;
+    gap: 45px;
+}
+
+.footer-column h2,
+.footer-column h3 {
+    font-size: 20px;
+}
+
+.footer-column h2 {
+    font-size: 42px;
+    font-weight: 800;
+}
+
+.footer-column h3 {
+    font-size: 20px;
+}
+
+.footer-column p {
+    margin-bottom: 12px;
+    color: #d8d8d8;
+    line-height: 1.8;
+    font-size: 15px;
+}
+
+.footer-column ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.footer-column li {
+    margin-bottom: 14px;
+    color: #d8d8d8;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.footer-column li:hover {
+    color: #fff;
+}
