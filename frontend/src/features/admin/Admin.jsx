@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { LayoutDashboard, ShoppingBag, Package, BarChart2, LogOut } from "lucide-react";
 import "./Admin.css";
 import ProductForm from "./Product-Form";
+import { notifyProductsUpdated } from "../../lib/api";
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -193,46 +194,186 @@ const OrdersTab = () => {
   );
 };
 
+// Modal: View product images
+const ViewProductModal = ({ product, onClose }) => {
+  if (!product) return null;
+  return (
+    <div className="pf-overlay" onClick={onClose}>
+      <div className="view-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="pf-header">
+          <div>
+            <h2 className="pf-title">{product.name}</h2>
+            <p className="pf-subtitle">{product.category} · {product.price}</p>
+          </div>
+          <button className="pf-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="view-modal-body">
+          {product.images && product.images.length > 0 ? (
+            <div className="view-images-grid">
+              {product.images.map((img, i) => (
+                <div key={i} className="view-image-wrap">
+                  <img
+                    src={img.url}
+                    alt={img.altText?.en || product.name}
+                    className="view-image"
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="view-no-images">
+              <p>No images uploaded for this product.</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Modal: Confirm delete
+const DeleteConfirmModal = ({ product, onConfirm, onCancel, isDeleting }) => {
+  if (!product) return null;
+  return (
+    <div className="pf-overlay" onClick={onCancel}>
+      <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+        <h2 className="pf-title">Delete Product</h2>
+        <p className="confirm-msg">
+          Are you sure you want to delete <strong>{product.name}</strong>?
+          This will also remove all associated images from Cloudinary. This action cannot be undone.
+        </p>
+        <div className="confirm-actions">
+          <button className="pf-btn-cancel" onClick={onCancel} disabled={isDeleting}>
+            Cancel
+          </button>
+          <button className="btn-delete-confirm" onClick={onConfirm} disabled={isDeleting}>
+            {isDeleting ? "Deleting..." : "Yes, Delete"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // Gestion des produits
 const ProductsTab = () => {
   const [showForm, setShowForm] = useState(false);
-  const [products, setProducts] = useState([
-    { id: 1, name: "Custom T-Shirt", category: "Apparel", price: "$30.00", stock: 45 },
-    { id: 2, name: "Hoodie",         category: "Apparel", price: "$90.00", stock: 20 },
-    { id: 3, name: "Tote Bag",       category: "Accessories", price: "$25.00", stock: 60 },
-    { id: 4, name: "Mug",            category: "Accessories", price: "$18.00", stock: 80 },
-    { id: 5, name: "3D Accessory",   category: "3D Prints",   price: "$35.00", stock: 15 },
-  ]);
+  const [editingProduct, setEditingProduct] = useState(null); // product raw data for edit
+  const [viewingProduct, setViewingProduct] = useState(null); // product for image viewer
+  const [deletingProduct, setDeletingProduct] = useState(null); // product pending delete
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
-  // Called by ProductForm on successful creation
+  const [products, setProducts] = useState([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+  const [loadError, setLoadError] = useState("");
+
+  // Map raw API product → table row
+  const toRow = (p) => ({
+    id:       p._id,
+    name:     p.name?.en ?? p.name,
+    category: p.category,
+    price:    `$${Number(p.price).toFixed(2)}`,
+    stock:    p.variants?.reduce((sum, v) => sum + v.stock, 0) ?? p.stock,
+    images:   p.images ?? [],
+    _raw:     p, // keep raw data for editing
+  });
+
+  // Load existing products from the database when the tab mounts
+  useEffect(() => {
+    const loadProducts = async () => {
+      setIsLoadingProducts(true);
+      setLoadError("");
+      try {
+        const token = localStorage.getItem("adminToken");
+        const res = await fetch("http://localhost:5000/api/products", {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.message || "Failed to load products.");
+        }
+
+        const data = await res.json();
+        setProducts(data.map(toRow));
+      } catch (err) {
+        setLoadError(err.message);
+      } finally {
+        setIsLoadingProducts(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
+
   const handleProductCreated = (newProduct) => {
-    setProducts((prev) => [
-      {
-        id:       newProduct._id,
-        name:     newProduct.name.en,
-        category: newProduct.category,
-        price:    `$${Number(newProduct.price).toFixed(2)}`,
-        stock:    newProduct.variants.reduce((sum, v) => sum + v.stock, 0),
-      },
-      ...prev,
-    ]);
+    setProducts((prev) => [toRow(newProduct), ...prev]);
+  };
+
+  const handleProductUpdated = (updatedProduct) => {
+    setProducts((prev) =>
+      prev.map((p) =>
+        p.id === (updatedProduct._id ?? updatedProduct.id) ? toRow(updatedProduct) : p
+      )
+    );
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingProduct) return;
+    setIsDeleting(true);
+    setDeleteError("");
+    try {
+      const token = localStorage.getItem("adminToken");
+      const res = await fetch(`http://localhost:5000/api/products/${deletingProduct.id}`, {
+        method: "DELETE",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || "Failed to delete product.");
+      }
+      setProducts((prev) => prev.filter((p) => p.id !== deletingProduct.id));
+      setDeletingProduct(null);
+    } catch (err) {
+      setDeleteError(err.message);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
     <div>
-      {/* Modal renders on top of everything when open */}
-      {showForm && (
+      {/* ── Modals ── */}
+      {viewingProduct && (
+        <ViewProductModal product={viewingProduct} onClose={() => setViewingProduct(null)} />
+      )}
+
+      {deletingProduct && (
+        <DeleteConfirmModal
+          product={deletingProduct}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => { setDeletingProduct(null); setDeleteError(""); }}
+          isDeleting={isDeleting}
+        />
+      )}
+
+      {(showForm || editingProduct) && (
         <ProductForm
-          onClose={() => setShowForm(false)}
+          product={editingProduct?._raw ?? null}
+          onClose={() => { setShowForm(false); setEditingProduct(null); }}
           onSuccess={(product) => {
-            handleProductCreated(product);
+            if (editingProduct) handleProductUpdated(product);
+            else handleProductCreated(product);
             setShowForm(false);
+            setEditingProduct(null);
           }}
         />
       )}
 
       <div className="tab-header">
         <h1>Products</h1>
+        {deleteError && <p className="delete-error">{deleteError}</p>}
         <button className="btn-add" onClick={() => setShowForm(true)}>
           + Add Product
         </button>
@@ -250,19 +391,54 @@ const ProductsTab = () => {
           </tr>
         </thead>
         <tbody>
-          {products.map((product) => (
+            {isLoadingProducts ? (
+            <tr>
+              <td colSpan={6} style={{ textAlign: "center", padding: "1.5rem" }}>
+                Loading products...
+              </td>
+            </tr>
+          ) : products.length === 0 ? (
+            <tr>
+              <td colSpan={6} style={{ textAlign: "center", padding: "1.5rem" }}>
+                No products yet. Click "+ Add Product" to create your first one.
+              </td>
+            </tr>
+          ) : (
+            products.map((product) => (
             <tr key={product.id}>
-              <td>{product.id}</td>
+              <td style={{ fontSize: "11px", color: "#aaa" }}>
+                {String(product.id).length > 10 ? `…${String(product.id).slice(-6)}` : product.id}
+              </td>
               <td>{product.name}</td>
               <td>{product.category}</td>
               <td>{product.price}</td>
               <td className={product.stock < 20 ? "low-stock" : ""}>{product.stock}</td>
               <td>
-                <button className="btn-edit">Edit</button>
-                <button className="btn-delete">Delete</button>
+                <button
+                  className="btn-view"
+                  onClick={() => setViewingProduct(product)}
+                  title="View images"
+                >
+                  View
+                </button>
+                <button
+                  className="btn-edit"
+                  onClick={() => setEditingProduct(product)}
+                  title="Edit product"
+                >
+                  Edit
+                </button>
+                <button
+                  className="btn-delete"
+                  onClick={() => setDeletingProduct(product)}
+                  title="Delete product"
+                >
+                  Delete
+                </button>
               </td>
             </tr>
-          ))}
+            ))
+          )}
         </tbody>
       </table>
     </div>

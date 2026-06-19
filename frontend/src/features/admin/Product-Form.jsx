@@ -98,31 +98,40 @@ const BilingualInput = ({ label, values, onChange, multiline = false, required =
 );
 
 // Main component
+// When `product` prop is passed, the form runs in edit mode (PUT).
+// When it's null/undefined, it runs in create mode (POST).
 
-const ProductForm = ({ onClose, onSuccess }) => {
-  // ── Core fields
-  const [name, setName] = useState({ en: "", fr: "" });
-  const [description, setDescription] = useState({ en: "", fr: "" });
-  const [price, setPrice] = useState("");
-  const [category, setCategory] = useState("");
-  const [isActive, setIsActive] = useState(true);
+const ProductForm = ({ onClose, onSuccess, product: editProduct = null }) => {
+  const isEditMode = !!editProduct;
+
+  // ── Core fields — pre-populate from editProduct if editing
+  const [name, setName] = useState(editProduct?.name ?? { en: "", fr: "" });
+  const [description, setDescription] = useState(editProduct?.description ?? { en: "", fr: "" });
+  const [price, setPrice] = useState(editProduct?.price ? String(editProduct.price) : "");
+  const [category, setCategory] = useState(editProduct?.category ?? "");
+  const [isActive, setIsActive] = useState(editProduct?.isActive ?? true);
 
   // ── Sizes — multi-select toggle
-  const [sizes, setSizes] = useState([]);
+  const [sizes, setSizes] = useState(editProduct?.sizes ?? []);
 
   // ── Colors
-  const [colors, setColors] = useState([{ ...EMPTY_COLOR }]);
+  const [colors, setColors] = useState(
+    editProduct?.colors?.length ? editProduct.colors : [{ ...EMPTY_COLOR }]
+  );
 
   // ── Neck type (optional)
-  const [neckType, setNeckType] = useState("");
-  const [vNeckDepth, setVNeckDepth] = useState("");
+  const [neckType, setNeckType] = useState(editProduct?.neckType ?? "");
+  const [vNeckDepth, setVNeckDepth] = useState(editProduct?.vNeckDepth ?? "");
 
   // ── Variants
-  const [variants, setVariants] = useState([{ ...EMPTY_VARIANT }]);
+  const [variants, setVariants] = useState(
+    editProduct?.variants?.length ? editProduct.variants : [{ ...EMPTY_VARIANT }]
+  );
 
   // ── Images
   const [imageFiles, setImageFiles] = useState([]);   // File objects
   const [imagePreviews, setImagePreviews] = useState([]); // data URLs
+  const [existingImages, setExistingImages] = useState(editProduct?.images ?? []); // already on Cloudinary
   const fileInputRef = useRef(null);
 
   // ── UI state
@@ -226,8 +235,13 @@ const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem("adminToken");
-      const res = await fetch("http://localhost:5000/api/products", {
-        method: "POST",
+      const url = isEditMode
+        ? `http://localhost:5000/api/products/${editProduct._id}`
+        : "http://localhost:5000/api/products";
+      const method = isEditMode ? "PUT" : "POST";
+
+      const res = await fetch(url, {
+        method,
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: fd,
       });
@@ -280,7 +294,7 @@ const handleSubmit = async () => {
         <div className="pf-modal">
           <div className="pf-success">
             <div className="pf-success-icon">✓</div>
-            <p>Product created successfully!</p>
+            <p>{isEditMode ? "Product updated successfully!" : "Product created successfully!"}</p>
           </div>
         </div>
       </div>
@@ -288,337 +302,380 @@ const handleSubmit = async () => {
   }
 
   return (
-    <div className="pf-overlay">
-      <div className="pf-modal">
-        {/* Header */}
-        <div className="pf-header">
-          <div>
-            <h2 className="pf-title">New Product</h2>
-            <p className="pf-subtitle">Fill in all fields in both languages</p>
+      <div className="pf-overlay">
+        <div className="pf-modal">
+          {/* Header */}
+          <div className="pf-header">
+            <div>
+              <h2 className="pf-title">{isEditMode ? "Edit Product" : "New Product"}</h2>
+              <p className="pf-subtitle">Fill in all fields in both languages</p>
+            </div>
+            <button className="pf-close" onClick={onClose} title="Close">
+              <X size={18} />
+            </button>
           </div>
-          <button className="pf-close" onClick={onClose} title="Close">
-            <X size={18} />
-          </button>
-        </div>
 
-        {/* Error banner */}
-        {error && <div className="pf-error">{error}</div>}
+          {/* Error banner */}
+          {error && <div className="pf-error">{error}</div>}
 
-        <div className="pf-body">
-          {/* ── Section 1: Basics ── */}
-          <SectionTitle>Basic Info</SectionTitle>
+          <div className="pf-body">
+            {/* ── Section 1: Basics ── */}
+            <SectionTitle>Basic Info</SectionTitle>
 
-          <BilingualInput
-            label="Product Name"
-            values={name}
-            onChange={(lang, val) => setName((p) => ({ ...p, [lang]: val }))}
-            required
-          />
+            <BilingualInput
+              label="Product Name"
+              values={name}
+              onChange={(lang, val) => setName((p) => ({ ...p, [lang]: val }))}
+              required
+            />
 
-          <BilingualInput
-            label="Description"
-            values={description}
-            onChange={(lang, val) => setDescription((p) => ({ ...p, [lang]: val }))}
-            multiline
-            required
-          />
+            <BilingualInput
+              label="Description"
+              values={description}
+              onChange={(lang, val) => setDescription((p) => ({ ...p, [lang]: val }))}
+              multiline
+              required
+            />
 
-          <div className="pf-row">
-            <Field label="Price (CAD)">
-              <input
-                className="pf-input"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-              />
-            </Field>
+            <div className="pf-row">
+              <Field label="Price (CAD)">
+                <input
+                  className="pf-input"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                />
+              </Field>
 
-            <Field label="Category">
-              <div className="pf-select-wrap">
-                <select
-                  className="pf-input pf-select"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                >
-                  <option value="">Select category</option>
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c.charAt(0).toUpperCase() + c.slice(1)}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown size={14} className="pf-select-icon" />
-              </div>
-            </Field>
+              <Field label="Category">
+                <div className="pf-select-wrap">
+                  <select
+                    className="pf-input pf-select"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                  >
+                    <option value="">Select category</option>
+                    {CATEGORIES.map((c) => (
+                      <option key={c} value={c}>
+                        {c.charAt(0).toUpperCase() + c.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown size={14} className="pf-select-icon" />
+                </div>
+              </Field>
 
-            <Field label="Status">
-              <div className="pf-toggle-row">
+              <Field label="Status">
+                <div className="pf-toggle-row">
+                  <button
+                    type="button"
+                    className={`pf-toggle-btn ${isActive ? "active" : ""}`}
+                    onClick={() => setIsActive(true)}
+                  >
+                    Active
+                  </button>
+                  <button
+                    type="button"
+                    className={`pf-toggle-btn ${!isActive ? "active" : ""}`}
+                    onClick={() => setIsActive(false)}
+                  >
+                    Inactive
+                  </button>
+                </div>
+              </Field>
+            </div>
+
+            {/* ── Section 2: Sizes ── */}
+            <SectionTitle>Sizes</SectionTitle>
+            <div className="pf-size-grid">
+              {SIZES.map((s) => (
                 <button
+                  key={s}
                   type="button"
-                  className={`pf-toggle-btn ${isActive ? "active" : ""}`}
-                  onClick={() => setIsActive(true)}
+                  className={`pf-size-chip ${sizes.includes(s) ? "selected" : ""}`}
+                  onClick={() => toggleSize(s)}
                 >
-                  Active
+                  {s}
                 </button>
-                <button
-                  type="button"
-                  className={`pf-toggle-btn ${!isActive ? "active" : ""}`}
-                  onClick={() => setIsActive(false)}
-                >
-                  Inactive
-                </button>
-              </div>
-            </Field>
-          </div>
+              ))}
+            </div>
 
-          {/* ── Section 2: Sizes ── */}
-          <SectionTitle>Sizes</SectionTitle>
-          <div className="pf-size-grid">
-            {SIZES.map((s) => (
-              <button
-                key={s}
-                type="button"
-                className={`pf-size-chip ${sizes.includes(s) ? "selected" : ""}`}
-                onClick={() => toggleSize(s)}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-
-          {/* ── Section 3: Neck type ── */}
-          {(category === "tshirt" || category === "hoodie") && (
-            <>
-              <SectionTitle>Neck Type (optional)</SectionTitle>
-              <div className="pf-row">
-                <Field label="Neck Type">
-                  <div className="pf-select-wrap">
-                    <select
-                      className="pf-input pf-select"
-                      value={neckType}
-                      onChange={(e) => {
-                        setNeckType(e.target.value);
-                        if (e.target.value !== "v-neck") setVNeckDepth("");
-                      }}
-                    >
-                      <option value="">None</option>
-                      {NECK_TYPES.map((n) => (
-                        <option key={n} value={n}>
-                          {n.charAt(0).toUpperCase() + n.slice(1)}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown size={14} className="pf-select-icon" />
-                  </div>
-                </Field>
-
-                {neckType === "v-neck" && (
-                  <Field label="V-Neck Depth">
+            {/* ── Section 3: Neck type ── */}
+            {(category === "tshirt" || category === "hoodie") && (
+              <>
+                <SectionTitle>Neck Type (optional)</SectionTitle>
+                <div className="pf-row">
+                  <Field label="Neck Type">
                     <div className="pf-select-wrap">
                       <select
                         className="pf-input pf-select"
-                        value={vNeckDepth}
-                        onChange={(e) => setVNeckDepth(e.target.value)}
+                        value={neckType}
+                        onChange={(e) => {
+                          setNeckType(e.target.value);
+                          if (e.target.value !== "v-neck") setVNeckDepth("");
+                        }}
                       >
-                        <option value="">Select depth</option>
-                        {V_NECK_DEPTHS.map((d) => (
-                          <option key={d} value={d}>
-                            {d.charAt(0).toUpperCase() + d.slice(1)}
+                        <option value="">None</option>
+                        {NECK_TYPES.map((n) => (
+                          <option key={n} value={n}>
+                            {n.charAt(0).toUpperCase() + n.slice(1)}
                           </option>
                         ))}
                       </select>
                       <ChevronDown size={14} className="pf-select-icon" />
                     </div>
                   </Field>
-                )}
-              </div>
-            </>
-          )}
 
-          {/* ── Section 4: Colors ── */}
-          <SectionTitle>Colors</SectionTitle>
-          <div className="pf-color-list">
-            {colors.map((color, idx) => (
-              <div key={idx} className="pf-color-row">
-                <div className="pf-color-swatch-wrap">
+                  {neckType === "v-neck" && (
+                    <Field label="V-Neck Depth">
+                      <div className="pf-select-wrap">
+                        <select
+                          className="pf-input pf-select"
+                          value={vNeckDepth}
+                          onChange={(e) => setVNeckDepth(e.target.value)}
+                        >
+                          <option value="">Select depth</option>
+                          {V_NECK_DEPTHS.map((d) => (
+                            <option key={d} value={d}>
+                              {d.charAt(0).toUpperCase() + d.slice(1)}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown size={14} className="pf-select-icon" />
+                      </div>
+                    </Field>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* ── Section 4: Colors ── */}
+            <SectionTitle>Colors</SectionTitle>
+            <div className="pf-color-list">
+              {colors.map((color, idx) => (
+                <div key={idx} className="pf-color-row">
+                  <div className="pf-color-swatch-wrap">
+                    <input
+                      type="color"
+                      className="pf-color-picker"
+                      value={color.hex}
+                      onChange={(e) => updateColor(idx, "hex", e.target.value)}
+                      title="Pick color"
+                    />
+                    <span className="pf-color-hex">{color.hex}</span>
+                  </div>
                   <input
-                    type="color"
-                    className="pf-color-picker"
-                    value={color.hex}
-                    onChange={(e) => updateColor(idx, "hex", e.target.value)}
-                    title="Pick color"
+                    className="pf-input"
+                    type="text"
+                    placeholder="Name (EN)"
+                    value={color.name.en}
+                    onChange={(e) => updateColor(idx, "name.en", e.target.value)}
                   />
-                  <span className="pf-color-hex">{color.hex}</span>
-                </div>
-                <input
-                  className="pf-input"
-                  type="text"
-                  placeholder="Name (EN)"
-                  value={color.name.en}
-                  onChange={(e) => updateColor(idx, "name.en", e.target.value)}
-                />
-                <input
-                  className="pf-input"
-                  type="text"
-                  placeholder="Nom (FR)"
-                  value={color.name.fr}
-                  onChange={(e) => updateColor(idx, "name.fr", e.target.value)}
-                />
-                {colors.length > 1 && (
-                  <button
-                    type="button"
-                    className="pf-icon-btn pf-icon-btn--danger"
-                    onClick={() => removeColor(idx)}
-                    title="Remove color"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-          <button type="button" className="pf-add-row-btn" onClick={addColor}>
-            <Plus size={14} /> Add Color
-          </button>
-
-          {/* ── Section 5: Variants ── */}
-          <SectionTitle>Stock Variants</SectionTitle>
-          <p className="pf-hint pf-hint--block">
-            One row per size × color combination. "Color name" must match the English name you entered above.
-          </p>
-          <div className="pf-variants-list">
-            <div className="pf-variant-header">
-              <span>Size</span>
-              <span>Color (EN name)</span>
-              <span>Stock</span>
-              <span />
-            </div>
-            {variants.map((v, idx) => (
-              <div key={idx} className="pf-variant-row">
-                <div className="pf-select-wrap">
-                  <select
-                    className="pf-input pf-select"
-                    value={v.size}
-                    onChange={(e) => updateVariant(idx, "size", e.target.value)}
-                  >
-                    <option value="">Size</option>
-                    {SIZES.map((s) => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                  </select>
-                  <ChevronDown size={14} className="pf-select-icon" />
-                </div>
-                <div className="pf-select-wrap">
-                  <select
-                    className="pf-input pf-select"
-                    value={v.colorName}
-                    onChange={(e) => updateVariant(idx, "colorName", e.target.value)}
-                  >
-                    <option value="">Color</option>
-                    {colors
-                      .filter((c) => c.name.en)
-                      .map((c, ci) => (
-                        <option key={ci} value={c.name.en}>{c.name.en}</option>
-                      ))}
-                  </select>
-                  <ChevronDown size={14} className="pf-select-icon" />
-                </div>
-                <input
-                  className="pf-input"
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={v.stock}
-                  onChange={(e) => updateVariant(idx, "stock", Number(e.target.value))}
-                />
-                {variants.length > 1 && (
-                  <button
-                    type="button"
-                    className="pf-icon-btn pf-icon-btn--danger"
-                    onClick={() => removeVariant(idx)}
-                    title="Remove variant"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                )}
-              </div>
-            ))}
-          </div>
-          <button type="button" className="pf-add-row-btn" onClick={addVariant}>
-            <Plus size={14} /> Add Variant
-          </button>
-
-          {/* ── Section 6: Images ── */}
-          <SectionTitle>Images</SectionTitle>
-          <p className="pf-hint pf-hint--block">
-            Up to 10 images. Uploaded directly to Cloudinary via the backend.
-          </p>
-
-          {/* Upload zone */}
-          <div
-            className="pf-upload-zone"
-            onClick={() => fileInputRef.current?.click()}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              const files = Array.from(e.dataTransfer.files);
-              const dt = { target: { files } };
-              handleImageSelect(dt);
-            }}
-          >
-            <Upload size={22} className="pf-upload-icon" />
-            <p>Click or drag images here</p>
-            <span className="pf-hint">{imageFiles.length} / 10 selected</span>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              style={{ display: "none" }}
-              onChange={handleImageSelect}
-            />
-          </div>
-
-          {/* Previews */}
-          {imagePreviews.length > 0 && (
-            <div className="pf-image-previews">
-              {imagePreviews.map((src, idx) => (
-                <div key={idx} className="pf-preview-wrap">
-                  <img src={src} alt={`preview-${idx}`} className="pf-preview-img" />
-                  <button
-                    type="button"
-                    className="pf-preview-remove"
-                    onClick={() => removeImage(idx)}
-                    title="Remove image"
-                  >
-                    <X size={12} />
-                  </button>
+                  <input
+                    className="pf-input"
+                    type="text"
+                    placeholder="Nom (FR)"
+                    value={color.name.fr}
+                    onChange={(e) => updateColor(idx, "name.fr", e.target.value)}
+                  />
+                  {colors.length > 1 && (
+                    <button
+                      type="button"
+                      className="pf-icon-btn pf-icon-btn--danger"
+                      onClick={() => removeColor(idx)}
+                      title="Remove color"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
-          )}
-        </div>
+            <button type="button" className="pf-add-row-btn" onClick={addColor}>
+              <Plus size={14} /> Add Color
+            </button>
 
-        {/* Footer */}
-        <div className="pf-footer">
-          <button type="button" className="pf-btn-cancel" onClick={onClose}>
-            Cancel
-          </button>
-          <button
-            type="button"
-            className="pf-btn-submit"
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? "Creating..." : "Create Product"}
-          </button>
+            {/* ── Section 5: Variants ── */}
+            <SectionTitle>Stock Variants</SectionTitle>
+            <p className="pf-hint pf-hint--block">
+              One row per size × color combination. "Color name" must match the English name you entered above.
+            </p>
+            <div className="pf-variants-list">
+              <div className="pf-variant-header">
+                <span>Size</span>
+                <span>Color (EN name)</span>
+                <span>Stock</span>
+                <span />
+              </div>
+              {variants.map((v, idx) => (
+                <div key={idx} className="pf-variant-row">
+                  <div className="pf-select-wrap">
+                    <select
+                      className="pf-input pf-select"
+                      value={v.size}
+                      onChange={(e) => updateVariant(idx, "size", e.target.value)}
+                    >
+                      <option value="">Size</option>
+                      {SIZES.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={14} className="pf-select-icon" />
+                  </div>
+                  <div className="pf-select-wrap">
+                    <select
+                      className="pf-input pf-select"
+                      value={v.colorName}
+                      onChange={(e) => updateVariant(idx, "colorName", e.target.value)}
+                    >
+                      <option value="">Color</option>
+                      {colors
+                        .filter((c) => c.name.en)
+                        .map((c, ci) => (
+                          <option key={ci} value={c.name.en}>{c.name.en}</option>
+                        ))}
+                    </select>
+                    <ChevronDown size={14} className="pf-select-icon" />
+                  </div>
+                  <input
+                    className="pf-input"
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={v.stock}
+                    onChange={(e) => updateVariant(idx, "stock", Number(e.target.value))}
+                  />
+                  {variants.length > 1 && (
+                    <button
+                      type="button"
+                      className="pf-icon-btn pf-icon-btn--danger"
+                      onClick={() => removeVariant(idx)}
+                      title="Remove variant"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+            <button type="button" className="pf-add-row-btn" onClick={addVariant}>
+              <Plus size={14} /> Add Variant
+            </button>
+
+            {/* ── Section 6: Images ── */}
+            <SectionTitle>Images</SectionTitle>
+            <p className="pf-hint pf-hint--block">
+              Up to 10 images. Uploaded directly to Cloudinary via the backend.
+            </p>
+
+            {/* Existing images (edit mode only) */}
+            {isEditMode && existingImages.length > 0 && (
+              <>
+                <p className="pf-hint pf-hint--block" style={{ color: "#555", marginBottom: 6 }}>
+                  Current images — click ✕ to remove from Cloudinary on save:
+                </p>
+                <div className="pf-image-previews">
+                  {existingImages.map((img, idx) => (
+                    <div key={idx} className="pf-preview-wrap">
+                      <img src={img.url} alt={img.altText?.en || ""} className="pf-preview-img" />
+                      <button
+                        type="button"
+                        className="pf-preview-remove"
+                        title="Remove image"
+                        onClick={async () => {
+                          try {
+                            const token = localStorage.getItem("adminToken");
+                            const encodedId = encodeURIComponent(img.publicId);
+                            const res = await fetch(
+                              `http://localhost:5000/api/products/${editProduct._id}/images/${encodedId}`,
+                              {
+                                method: "DELETE",
+                                headers: token ? { Authorization: `Bearer ${token}` } : {},
+                              }
+                            );
+                            if (res.ok) {
+                              setExistingImages((prev) => prev.filter((_, i) => i !== idx));
+                            }
+                          } catch (e) {
+                            // silently ignore
+                          }
+                        }}
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* Upload zone */}
+            <div
+              className="pf-upload-zone"
+              onClick={() => fileInputRef.current?.click()}
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const files = Array.from(e.dataTransfer.files);
+                const dt = { target: { files } };
+                handleImageSelect(dt);
+              }}
+            >
+              <Upload size={22} className="pf-upload-icon" />
+              <p>Click or drag images here</p>
+              <span className="pf-hint">{imageFiles.length} / 10 selected</span>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                style={{ display: "none" }}
+                onChange={handleImageSelect}
+              />
+            </div>
+
+            {/* New image previews */}
+            {imagePreviews.length > 0 && (
+              <div className="pf-image-previews">
+                {imagePreviews.map((src, idx) => (
+                  <div key={idx} className="pf-preview-wrap">
+                    <img src={src} alt={`preview-${idx}`} className="pf-preview-img" />
+                    <button
+                      type="button"
+                      className="pf-preview-remove"
+                      onClick={() => removeImage(idx)}
+                      title="Remove image"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="pf-footer">
+            <button type="button" className="pf-btn-cancel" onClick={onClose}>
+              Cancel
+            </button>
+            <button
+              type="button"
+              className="pf-btn-submit"
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+            >
+              {isSubmitting
+                ? isEditMode ? "Saving..." : "Creating..."
+                : isEditMode ? "Save Changes" : "Create Product"}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
 export default ProductForm;

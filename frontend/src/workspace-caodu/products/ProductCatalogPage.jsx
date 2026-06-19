@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import "./ProductCatalogPage.css";
-import { api, CART_UPDATED_EVENT } from "../../lib/api";
+import { api, CART_UPDATED_EVENT, onProductsUpdated } from "../../lib/api";
 
 const categories = [
   { label: "All Products", icon: "all" },
@@ -38,6 +38,41 @@ const categoryMatchMap = {
   "3D Printed Accessories": (product) => product.type === "3D Printed Accessories",
   "Event Designs": (product) => product.type === "Event Designs",
 };
+
+// The backend (Products.js model) stores a single `category` enum slug
+// (tshirt, hoodie, tote, mug, sticker, keychain, print3D, other), bilingual
+// name/description objects, an `images` array, and `colors` as
+// { name, hex } objects — not the flat shape this page was built against
+// (type, image, colors as hex strings, etc). This maps a raw API product
+// into the shape the rest of the page already expects, so real database
+// products render and filter correctly instead of only the demo fallback.
+const CATEGORY_SLUG_TO_TYPE = {
+  tshirt: "T-Shirts",
+  hoodie: "Hoodies",
+  tote: "Tote Bags",
+  mug: "Mugs",
+  sticker: "Accessories",
+  keychain: "Accessories",
+  print3D: "3D Printed Accessories",
+  other: "Accessories",
+};
+
+const normalizeProduct = (product) => ({
+  id: product._id ?? product.id,
+  name: product.name?.en ?? product.name ?? "Untitled product",
+  subtitle: product.description?.en
+    ? product.description.en.length > 60
+      ? `${product.description.en.slice(0, 57)}...`
+      : product.description.en
+    : product.subtitle ?? "",
+  price: product.price,
+  ratingCount: typeof product.ratingCount === "number" ? product.ratingCount : null,
+  type: CATEGORY_SLUG_TO_TYPE[product.category] ?? product.type ?? "Accessories",
+  image: product.images?.[0]?.url ?? product.image ?? "",
+  colors: Array.isArray(product.colors)
+    ? product.colors.map((color) => (typeof color === "string" ? color : color.hex)).filter(Boolean)
+    : [],
+});
 
 const fallbackProducts = [
   {
@@ -220,21 +255,43 @@ const ProductCatalogPage = () => {
   const [maxPrice, setMaxPrice] = useState(200);
   const [selectedColor, setSelectedColor] = useState("");
 
-  useEffect(() => {
-    const loadProducts = async () => {
-      try {
-        const response = await api.getProducts();
-        setProducts(response.products || fallbackProducts);
-      } catch {
+  const loadProducts = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) setLoading(true);
+    try {
+      const response = await api.getProducts();
+      // The backend returns a plain array from GET /api/products, not
+      // { products: [...] } — using response.products here always made
+      // this fall through to the demo catalog, even with a working backend.
+      const rawProducts = Array.isArray(response) ? response : response?.products ?? [];
+      setProducts(rawProducts.map(normalizeProduct));
+      if (!silent) setActionMessage("");
+    } catch {
+      if (!silent) {
         setProducts(fallbackProducts);
         setActionMessage("Showing local catalog because the backend is not running yet.");
-      } finally {
-        setLoading(false);
       }
-    };
-
-    loadProducts();
+    } finally {
+      if (!silent) setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadProducts();
+
+    // Refetch as soon as the admin creates/edits/deletes a product (same tab
+    // or another tab of the same browser), and also when this tab regains
+    // focus, in case the change came from a different browser/device.
+    const unsubscribe = onProductsUpdated(() => loadProducts({ silent: true }));
+    const handleFocus = () => loadProducts({ silent: true });
+    window.addEventListener("focus", handleFocus);
+    document.addEventListener("visibilitychange", handleFocus);
+
+    return () => {
+      unsubscribe();
+      window.removeEventListener("focus", handleFocus);
+      document.removeEventListener("visibilitychange", handleFocus);
+    };
+  }, [loadProducts]);
 
   const addToCart = async (product) => {
     try {
@@ -261,7 +318,10 @@ const ProductCatalogPage = () => {
     const categoryMatches = (categoryMatchMap[activeCategory] || categoryMatchMap["All Products"])(product);
     const typeMatches = selectedTypes.length === 0 || selectedTypes.includes(product.type);
     const priceMatches = Number(product.price) <= maxPrice;
-    const colorMatches = !selectedColor || (Array.isArray(product.colors) && product.colors.includes(selectedColor));
+    const colorMatches =
+      !selectedColor ||
+      (Array.isArray(product.colors) &&
+        product.colors.some((color) => color.toLowerCase() === selectedColor.toLowerCase()));
 
     return categoryMatches && typeMatches && priceMatches && colorMatches;
   });
@@ -385,10 +445,12 @@ const ProductCatalogPage = () => {
                   <h2>{product.name}</h2>
                   <p>{product.subtitle}</p>
                   <strong>From ${Number(product.price).toFixed(2)}</strong>
-                  <div className="caodu-rating">
-                    <span>★★★★☆</span>
-                    <small>({product.ratingCount})</small>
-                  </div>
+                  {product.ratingCount !== null && (
+                    <div className="caodu-rating">
+                      <span>★★★★☆</span>
+                      <small>({product.ratingCount})</small>
+                    </div>
+                  )}
                   <button
                     type="button"
                     className="caodu-add-to-cart-btn"
