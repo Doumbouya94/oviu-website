@@ -9,6 +9,7 @@ import Gallery from "../features/gallery-portfolio/Gallery";
 import Contact from "../features/contact-us/Contact";
 import Admin from "../features/admin/Admin";
 import FAQ from "../features/FAQ/FAQ";
+import Payment from "../features/payment/payment";
 
 const AppRoutes = () => {
   return (
@@ -25,6 +26,7 @@ const AppRoutes = () => {
         {/* Route pour le dashboard admin */}
         <Route path="/admin" element={<Admin />} />
         <Route path="/faq" element={<FAQ />} />
+        <Route path="/payment" element={<Payment />} />
       </Routes>
       </main>
     </>

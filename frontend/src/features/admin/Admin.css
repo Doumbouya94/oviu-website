@@ -108,6 +108,9 @@
 }
 
 /* Couleurs selon le type de stat */
+.stat-number.pending { color: #e07b00; }
+.stat-number.completed { color: #2e8a5e; }
+.stat-number.revenue { color: #534AB7; }
 .stat-number.pending {
   color: #e07b00;
 }
