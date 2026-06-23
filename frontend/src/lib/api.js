@@ -47,6 +47,16 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ customerName, email }),
     }),
+  createPaymentIntent: (amount, currency = "usd") =>
+    request("/api/create-payment-intent", {
+      method: "POST",
+      body: JSON.stringify({ amount, currency }),
+    }),
+  savePayment: ({ customerName, email, paymentIntentId }) =>
+    request("/api/payments", {
+      method: "POST",
+      body: JSON.stringify({ customerName, email, paymentIntentId }),
+    }),
 };
 
 export const CART_UPDATED_EVENT = "oviu-cart-updated";

@@ -1,6 +1,5 @@
-const express = require('express');
-const cors = require('cors');
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+import Stripe from "stripe";
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -10,102 +9,18 @@ import mongoose from "mongoose";
 import connectDB from "./config/db.js";
 import { login } from "./controllers/authController.js";
 import ProductRoutes from "./routes/productRoutes.js";
+import Product from "./models/Products.js";
+import Payment from "./models/Payment.js";
 
 connectDB();
 
 const app = express();
 const port = process.env.PORT || 3001;
 
-const products = [
-  {
-    id: 1,
-    name: "Anime T-Shirt",
-    subtitle: "Premium Cotton",
-    price: 30,
-    ratingCount: 124,
-    type: "T-Shirts",
-    colors: ["#111111", "#F2F2F2", "#B41F1F"],
-    image:
-      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: 2,
-    name: "Wave Hoodie",
-    subtitle: "Premium Fleece",
-    price: 90,
-    ratingCount: 89,
-    type: "Hoodies",
-    colors: ["#111111", "#A4A4A4", "#0D3F8F"],
-    image:
-      "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: 3,
-    name: "Good Things Tote",
-    subtitle: "Premium Canvas",
-    price: 25,
-    ratingCount: 56,
-    type: "Tote Bags",
-    colors: ["#8C6A4F", "#F2BC1B", "#2E7A36"],
-    image:
-      "https://images.unsplash.com/photo-1614179689702-355944cd0918?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: 4,
-    name: "OVIU Mug",
-    subtitle: "Ceramic Mug",
-    price: 18,
-    ratingCount: 72,
-    type: "Mugs",
-    colors: ["#111111", "#F2F2F2", "#A4A4A4"],
-    image:
-      "https://images.unsplash.com/photo-1577937927133-66ef06acdf18?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: 5,
-    name: "Vinyl Stickers",
-    subtitle: "Waterproof • Durable",
-    price: 4,
-    ratingCount: 96,
-    type: "Accessories",
-    colors: ["#111111", "#F2BC1B", "#B41F1F"],
-    image:
-      "https://images.unsplash.com/photo-1629224316810-9d8805b95e76?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: 6,
-    name: "OVIU Keychain",
-    subtitle: "Custom Keychain",
-    price: 8,
-    ratingCount: 38,
-    type: "Accessories",
-    colors: ["#111111", "#A4A4A4", "#0D3F8F"],
-    image:
-      "https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: 7,
-    name: "3D Printed Owl",
-    subtitle: "PLA Material",
-    price: 15,
-    ratingCount: 41,
-    type: "3D Printed Accessories",
-    colors: ["#111111", "#2E7A36", "#F2BC1B"],
-    image:
-      "https://images.unsplash.com/photo-1587563871167-1ee9c731aefb?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    id: 8,
-    name: "Vintage Tee",
-    subtitle: "Premium Cotton",
-    price: 35,
-    ratingCount: 67,
-    type: "T-Shirts",
-    colors: ["#8C6A4F", "#B41F1F", "#F2F2F2"],
-    image:
-      "https://images.unsplash.com/photo-1503341338985-95ca53d5d45c?auto=format&fit=crop&w=800&q=80",
-  },
-];
+// NOTE: the old hardcoded mock `products` array (8 demo items with numeric
+// ids 1-8) was removed. The cart now looks products up directly in MongoDB
+// via the Product model, so it works with whatever you create in the Admin
+// panel (real products have a Mongo _id string, not a numeric id).
 
 const cart = new Map();
 const orders = [];
@@ -120,8 +35,12 @@ app.post("/api/auth/login", login);
 // Product routes
 app.use("/api/products", ProductRoutes);
 
-const findProduct = (productId) =>
-  products.find((product) => product.id === Number(productId));
+// Looks up a real product in MongoDB by its _id. Returns null (instead of
+// throwing) when the id isn't a valid ObjectId, e.g. "1", "abc", etc.
+const findProduct = async (productId) => {
+  if (!mongoose.Types.ObjectId.isValid(productId)) return null;
+  return Product.findById(productId);
+};
 
 const getCartItems = () =>
   Array.from(cart.values()).map((entry) => ({
@@ -161,26 +80,27 @@ app.get("/api/cart", (_req, res) => {
   });
 });
 
-app.post("/api/cart/items", (req, res) => {
+app.post("/api/cart/items", async (req, res) => {
   const { productId, quantity = 1 } = req.body || {};
-  const product = findProduct(productId);
+
+  const product = await findProduct(productId);
 
   if (!product) {
     return res.status(404).json({ message: "Product not found." });
   }
 
   const nextQuantity = Math.max(1, Number(quantity) || 1);
-  const existing = cart.get(product.id);
+  const existing = cart.get(productId);
   const updatedQuantity = existing
     ? existing.quantity + nextQuantity
     : nextQuantity;
 
-  cart.set(product.id, {
-    productId: product.id,
-    name: product.name,
-    subtitle: product.subtitle,
+  cart.set(productId, {
+    productId,
+    name: product.name?.en ?? product.name,
+    subtitle: product.category,
     price: product.price,
-    image: product.image,
+    image: product.images?.[0]?.url ?? "",
     quantity: updatedQuantity,
   });
 
@@ -191,7 +111,7 @@ app.post("/api/cart/items", (req, res) => {
 });
 
 app.patch("/api/cart/items/:productId", (req, res) => {
-  const productId = Number(req.params.productId);
+  const { productId } = req.params;
   const current = cart.get(productId);
 
   if (!current) {
@@ -216,7 +136,7 @@ app.patch("/api/cart/items/:productId", (req, res) => {
 });
 
 app.delete("/api/cart/items/:productId", (req, res) => {
-  cart.delete(Number(req.params.productId));
+  cart.delete(req.params.productId);
 
   res.json({
     message: "Cart item removed.",
@@ -279,9 +199,9 @@ app.get("/api/orders/:orderNumber", (req, res) => {
 });
 
 // Stripe Payment Intent
-app.post('/api/create-payment-intent', async (req, res) => {
+app.post("/api/create-payment-intent", async (req, res) => {
   try {
-    const { amount, currency = 'usd' } = req.body;
+    const { amount, currency = "usd" } = req.body;
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amount * 100,
       currency,
@@ -290,6 +210,89 @@ app.post('/api/create-payment-intent', async (req, res) => {
     res.json({ clientSecret: paymentIntent.client_secret });
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Called from the frontend right after Stripe confirms the payment.
+// We don't trust the client's word that "it succeeded" — we re-check the
+// PaymentIntent status with Stripe directly before writing anything to
+// the database, then snapshot the current cart into its own document in
+// the `payments` collection.
+app.post("/api/payments", async (req, res) => {
+  const { customerName = "", email = "", paymentIntentId } = req.body || {};
+
+  if (!paymentIntentId) {
+    return res.status(400).json({ message: "Missing paymentIntentId." });
+  }
+
+  try {
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    if (paymentIntent.status !== "succeeded") {
+      return res
+        .status(400)
+        .json({ message: "Payment has not succeeded yet." });
+    }
+
+    // If this gets called twice for the same PaymentIntent (e.g. a retry
+    // after a flaky network response) don't create a duplicate record.
+    const existing = await Payment.findOne({
+      stripePaymentIntentId: paymentIntentId,
+    });
+    if (existing) {
+      return res.json({
+        message: "Payment already recorded.",
+        order: existing,
+      });
+    }
+
+    const summary = getCartSummary();
+
+    if (summary.itemCount === 0) {
+      return res
+        .status(400)
+        .json({ message: "Cart is empty, nothing to record." });
+    }
+
+    const total = Number(
+      (summary.subtotal + summary.shipping + summary.tax).toFixed(2),
+    );
+
+    const orderNumber = `OVIU-${String(Date.now()).slice(-6)}-${Math.floor(
+      100 + Math.random() * 900,
+    )}`;
+
+    const payment = await Payment.create({
+      orderNumber,
+      customerName: String(customerName).trim(),
+      email: String(email).trim(),
+      items: summary.items.map((item) => ({
+        productId: String(item.productId),
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        lineTotal: item.lineTotal,
+      })),
+      subtotal: summary.subtotal,
+      shipping: summary.shipping,
+      tax: summary.tax,
+      total,
+      currency: paymentIntent.currency,
+      stripePaymentIntentId: paymentIntentId,
+      status: "succeeded",
+    });
+
+    cart.clear();
+
+    res.status(201).json({
+      message: "Payment recorded successfully.",
+      order: payment,
+    });
+  } catch (error) {
+    console.error("savePayment error:", error);
+    res
+      .status(500)
+      .json({ message: "Failed to record payment.", error: error.message });
   }
 });
 

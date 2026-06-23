@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './Cart.css';
 import { api, CART_UPDATED_EVENT } from '../../lib/api';
 import { useLang } from '../../context/LanguageContext';
@@ -17,6 +17,7 @@ const Cart = () => {
   const [orderConfirmation, setOrderConfirmation] = useState(null);
   const { lang } = useLang();
   const c = t.cart;
+  const navigate = useNavigate();
 
   const loadCart = async () => {
     setLoading(true);
@@ -215,7 +216,7 @@ const Cart = () => {
                     type="button"
                     className="cart-summary__checkout"
                     disabled={cart.items.length === 0}
-                    onClick={() => window.location.href = '/payment'}
+                    onClick={() => navigate('/payment', { state: { customerName, email } })}
                     >
                     {c.placeOrder[lang]}
               </button>

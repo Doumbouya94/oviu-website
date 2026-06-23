@@ -1,26 +1,30 @@
 import { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { api, CART_UPDATED_EVENT } from '../../lib/api';
 
 const stripePromise = loadStripe('pk_test_51TjLEt2KWgWqRAq7iZDZySStNGImo9zBJXThCN3TXaGzhYzMaumd3YFYtbVlUhPEHtV8sCprbY2Bioa4FUigFQ9600pZvtxUtX');
 
 const formatMoney = (value) => `$${Number(value || 0).toFixed(2)}`;
 
-const CheckoutForm = ({ cart }) => {
+const CheckoutForm = ({ cart, customerName, email }) => {
   const stripe = useStripe();
   const elements = useElements();
   const navigate = useNavigate();
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [order, setOrder] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!stripe || !elements) return;
 
     setLoading(true);
-    const { error } = await stripe.confirmPayment({
+    setMessage('');
+
+    const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {},
       redirect: 'if_required',
@@ -28,9 +32,37 @@ const CheckoutForm = ({ cart }) => {
 
     if (error) {
       setMessage(error.message);
-    } else {
-      setSuccess(true);
+      setLoading(false);
+      return;
     }
+
+    if (paymentIntent?.status !== 'succeeded') {
+      setMessage('Payment did not complete. Please try again.');
+      setLoading(false);
+      return;
+    }
+
+    // Stripe confirmed the charge — now persist it server-side as its own
+    // record in the `payments` collection (and clear the cart there too).
+    try {
+      const response = await api.savePayment({
+        customerName,
+        email,
+        paymentIntentId: paymentIntent.id,
+      });
+      setOrder(response.order);
+      window.dispatchEvent(new Event(CART_UPDATED_EVENT));
+      setSuccess(true);
+    } catch (saveError) {
+      // The charge went through on Stripe's side even though saving failed
+      // here, so don't tell the customer it failed — that could lead to a
+      // double charge if they retry. Surface it clearly instead.
+      setMessage(
+        `Your payment succeeded, but we couldn't save your order (${saveError.message}). ` +
+          `Please contact us with this payment reference: ${paymentIntent.id}.`,
+      );
+    }
+
     setLoading(false);
   };
 
@@ -39,7 +71,13 @@ const CheckoutForm = ({ cart }) => {
       <div style={styles.success}>
         <div style={styles.successIcon}>✓</div>
         <h2 style={styles.successTitle}>Payment Successful!</h2>
-        <p style={styles.successSub}>Thank you for your order. You will receive a confirmation shortly.</p>
+        <p style={styles.successSub}>
+          {order ? (
+            <>Order <strong>{order.orderNumber}</strong> confirmed. You will receive a confirmation shortly.</>
+          ) : (
+            'Thank you for your order. You will receive a confirmation shortly.'
+          )}
+        </p>
         <button style={styles.successBtn} onClick={() => navigate('/')}>
           Back to Home
         </button>
@@ -100,29 +138,44 @@ const CheckoutForm = ({ cart }) => {
 const Payment = () => {
   const [clientSecret, setClientSecret] = useState('');
   const [cart, setCart] = useState(null);
+  const [error, setError] = useState('');
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { customerName = '', email = '' } = location.state || {};
 
   useEffect(() => {
-    // Fetch real cart total first
-    fetch('http://localhost:3001/api/cart')
-      .then((res) => res.json())
-      .then((cartData) => {
+    const init = async () => {
+      try {
+        const cartData = await api.getCart();
         setCart(cartData);
-        // Use real cart total for Stripe
-        return fetch('http://localhost:3001/api/create-payment-intent', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ amount: cartData.total, currency: 'usd' }),
-        });
-      })
-      .then((res) => res.json())
-      .then((data) => setClientSecret(data.clientSecret));
+
+        if (!cartData.items || cartData.items.length === 0) {
+          setError('Your cart is empty.');
+          return;
+        }
+
+        const { clientSecret: secret } = await api.createPaymentIntent(cartData.total);
+        setClientSecret(secret);
+      } catch (err) {
+        setError(err.message);
+      }
+    };
+
+    init();
   }, []);
 
   return (
     <div style={styles.page}>
-      {clientSecret ? (
+      {error ? (
+        <div style={styles.success}>
+          <p style={styles.message}>{error}</p>
+          <button style={styles.successBtn} onClick={() => navigate('/cart')}>
+            Back to Cart
+          </button>
+        </div>
+      ) : clientSecret ? (
         <Elements stripe={stripePromise} options={{ clientSecret }}>
-          <CheckoutForm cart={cart} />
+          <CheckoutForm cart={cart} customerName={customerName} email={email} />
         </Elements>
       ) : (
         <p style={{ color: '#555' }}>Loading payment...</p>
