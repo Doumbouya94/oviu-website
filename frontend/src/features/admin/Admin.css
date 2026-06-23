@@ -111,6 +111,17 @@
 .stat-number.pending { color: #e07b00; }
 .stat-number.completed { color: #2e8a5e; }
 .stat-number.revenue { color: #534AB7; }
+.stat-number.pending {
+  color: #e07b00;
+}
+
+.stat-number.completed {
+  color: #2e8a5e;
+}
+
+.stat-number.revenue {
+  color: #534AB7;
+}
 
 /* Tableau admin */
 .admin-table {
@@ -344,4 +355,120 @@
 .btn-logout:hover {
   background-color: #2a2a2a;
   color: #fff;
+}
+
+/* ── View modal (product images) ── */
+.view-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 680px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+}
+
+.view-modal-body {
+  padding: 24px 32px 32px;
+}
+
+.view-images-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+}
+
+.view-image-wrap {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #eee;
+  aspect-ratio: 1 / 1;
+}
+
+.view-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.view-no-images {
+  text-align: center;
+  padding: 48px 0;
+  color: #aaa;
+  font-size: 14px;
+}
+
+/* ── Delete confirm modal ── */
+.confirm-modal {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 420px;
+  padding: 36px 32px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.confirm-msg {
+  font-size: 14px;
+  color: #444;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.btn-delete-confirm {
+  background-color: #c41a23;
+  color: #fff;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-delete-confirm:hover:not(:disabled) {
+  background-color: #a01620;
+}
+
+.btn-delete-confirm:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── View button ── */
+.btn-view {
+  background-color: #eef2ff;
+  color: #3730a3;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-right: 6px;
+  transition: background 0.2s;
+}
+
+.btn-view:hover {
+  background-color: #dde5ff;
+}
+
+/* ── Delete error inline ── */
+.delete-error {
+  font-size: 13px;
+  color: #712b13;
+  background: #faece7;
+  padding: 8px 14px;
+  border-radius: 8px;
+  margin: 0;
 }

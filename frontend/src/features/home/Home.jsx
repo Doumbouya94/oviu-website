@@ -1,4 +1,3 @@
-
 import "./Home.css";
 import heroImg from "../../assets/photo_acceuil_1.png";
 import { Shield, Leaf, Truck } from "lucide-react";

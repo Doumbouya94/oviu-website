@@ -218,7 +218,7 @@ const Cart = () => {
                     onClick={() => window.location.href = '/payment'}
                     >
                     {c.placeOrder[lang]}
-</button>
+              </button>
             </form>
             <button type="button" className="cart-summary__clear" onClick={clearCart}>
               {c.clearCart[lang]}

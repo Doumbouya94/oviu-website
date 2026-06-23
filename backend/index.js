@@ -1,7 +1,17 @@
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+import express from "express";
+import cors from "cors";
+import dotenv from "dotenv";
+dotenv.config();
+
+import mongoose from "mongoose";
+import connectDB from "./config/db.js";
+import { login } from "./controllers/authController.js";
+import ProductRoutes from "./routes/productRoutes.js";
+
+connectDB();
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -9,91 +19,91 @@ const port = process.env.PORT || 3001;
 const products = [
   {
     id: 1,
-    name: 'Anime T-Shirt',
-    subtitle: 'Premium Cotton',
+    name: "Anime T-Shirt",
+    subtitle: "Premium Cotton",
     price: 30,
     ratingCount: 124,
-    type: 'T-Shirts',
-    colors: ['#111111', '#F2F2F2', '#B41F1F'],
+    type: "T-Shirts",
+    colors: ["#111111", "#F2F2F2", "#B41F1F"],
     image:
-      'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80',
+      "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&w=800&q=80",
   },
   {
     id: 2,
-    name: 'Wave Hoodie',
-    subtitle: 'Premium Fleece',
+    name: "Wave Hoodie",
+    subtitle: "Premium Fleece",
     price: 90,
     ratingCount: 89,
-    type: 'Hoodies',
-    colors: ['#111111', '#A4A4A4', '#0D3F8F'],
+    type: "Hoodies",
+    colors: ["#111111", "#A4A4A4", "#0D3F8F"],
     image:
-      'https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=800&q=80',
+      "https://images.unsplash.com/photo-1556821840-3a63f95609a7?auto=format&fit=crop&w=800&q=80",
   },
   {
     id: 3,
-    name: 'Good Things Tote',
-    subtitle: 'Premium Canvas',
+    name: "Good Things Tote",
+    subtitle: "Premium Canvas",
     price: 25,
     ratingCount: 56,
-    type: 'Tote Bags',
-    colors: ['#8C6A4F', '#F2BC1B', '#2E7A36'],
+    type: "Tote Bags",
+    colors: ["#8C6A4F", "#F2BC1B", "#2E7A36"],
     image:
-      'https://images.unsplash.com/photo-1614179689702-355944cd0918?auto=format&fit=crop&w=800&q=80',
+      "https://images.unsplash.com/photo-1614179689702-355944cd0918?auto=format&fit=crop&w=800&q=80",
   },
   {
     id: 4,
-    name: 'OVIU Mug',
-    subtitle: 'Ceramic Mug',
+    name: "OVIU Mug",
+    subtitle: "Ceramic Mug",
     price: 18,
     ratingCount: 72,
-    type: 'Mugs',
-    colors: ['#111111', '#F2F2F2', '#A4A4A4'],
+    type: "Mugs",
+    colors: ["#111111", "#F2F2F2", "#A4A4A4"],
     image:
-      'https://images.unsplash.com/photo-1577937927133-66ef06acdf18?auto=format&fit=crop&w=800&q=80',
+      "https://images.unsplash.com/photo-1577937927133-66ef06acdf18?auto=format&fit=crop&w=800&q=80",
   },
   {
     id: 5,
-    name: 'Vinyl Stickers',
-    subtitle: 'Waterproof • Durable',
+    name: "Vinyl Stickers",
+    subtitle: "Waterproof • Durable",
     price: 4,
     ratingCount: 96,
-    type: 'Accessories',
-    colors: ['#111111', '#F2BC1B', '#B41F1F'],
+    type: "Accessories",
+    colors: ["#111111", "#F2BC1B", "#B41F1F"],
     image:
-      'https://images.unsplash.com/photo-1629224316810-9d8805b95e76?auto=format&fit=crop&w=800&q=80',
+      "https://images.unsplash.com/photo-1629224316810-9d8805b95e76?auto=format&fit=crop&w=800&q=80",
   },
   {
     id: 6,
-    name: 'OVIU Keychain',
-    subtitle: 'Custom Keychain',
+    name: "OVIU Keychain",
+    subtitle: "Custom Keychain",
     price: 8,
     ratingCount: 38,
-    type: 'Accessories',
-    colors: ['#111111', '#A4A4A4', '#0D3F8F'],
+    type: "Accessories",
+    colors: ["#111111", "#A4A4A4", "#0D3F8F"],
     image:
-      'https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=800&q=80',
+      "https://images.unsplash.com/photo-1617038220319-276d3cfab638?auto=format&fit=crop&w=800&q=80",
   },
   {
     id: 7,
-    name: '3D Printed Owl',
-    subtitle: 'PLA Material',
+    name: "3D Printed Owl",
+    subtitle: "PLA Material",
     price: 15,
     ratingCount: 41,
-    type: '3D Printed Accessories',
-    colors: ['#111111', '#2E7A36', '#F2BC1B'],
+    type: "3D Printed Accessories",
+    colors: ["#111111", "#2E7A36", "#F2BC1B"],
     image:
-      'https://images.unsplash.com/photo-1587563871167-1ee9c731aefb?auto=format&fit=crop&w=800&q=80',
+      "https://images.unsplash.com/photo-1587563871167-1ee9c731aefb?auto=format&fit=crop&w=800&q=80",
   },
   {
     id: 8,
-    name: 'Vintage Tee',
-    subtitle: 'Premium Cotton',
+    name: "Vintage Tee",
+    subtitle: "Premium Cotton",
     price: 35,
     ratingCount: 67,
-    type: 'T-Shirts',
-    colors: ['#8C6A4F', '#B41F1F', '#F2F2F2'],
+    type: "T-Shirts",
+    colors: ["#8C6A4F", "#B41F1F", "#F2F2F2"],
     image:
-      'https://images.unsplash.com/photo-1503341338985-95ca53d5d45c?auto=format&fit=crop&w=800&q=80',
+      "https://images.unsplash.com/photo-1503341338985-95ca53d5d45c?auto=format&fit=crop&w=800&q=80",
   },
 ];
 
@@ -104,7 +114,14 @@ let nextOrderNumber = 1001;
 app.use(cors());
 app.use(express.json());
 
-const findProduct = (productId) => products.find((product) => product.id === Number(productId));
+// Authentication routes
+app.post("/api/auth/login", login);
+
+// Product routes
+app.use("/api/products", ProductRoutes);
+
+const findProduct = (productId) =>
+  products.find((product) => product.id === Number(productId));
 
 const getCartItems = () =>
   Array.from(cart.values()).map((entry) => ({
@@ -126,33 +143,37 @@ const getCartSummary = () => {
   };
 };
 
-app.get('/api/health', (_req, res) => {
+app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
 });
 
-app.get('/api/products', (_req, res) => {
-  res.json({ products });
-});
+// app.get("/api/products", (_req, res) => {
+//   res.json({ products });
+// });
 
-app.get('/api/cart', (_req, res) => {
+app.get("/api/cart", (_req, res) => {
   const summary = getCartSummary();
   res.json({
     ...summary,
-    total: Number((summary.subtotal + summary.shipping + summary.tax).toFixed(2)),
+    total: Number(
+      (summary.subtotal + summary.shipping + summary.tax).toFixed(2),
+    ),
   });
 });
 
-app.post('/api/cart/items', (req, res) => {
+app.post("/api/cart/items", (req, res) => {
   const { productId, quantity = 1 } = req.body || {};
   const product = findProduct(productId);
 
   if (!product) {
-    return res.status(404).json({ message: 'Product not found.' });
+    return res.status(404).json({ message: "Product not found." });
   }
 
   const nextQuantity = Math.max(1, Number(quantity) || 1);
   const existing = cart.get(product.id);
-  const updatedQuantity = existing ? existing.quantity + nextQuantity : nextQuantity;
+  const updatedQuantity = existing
+    ? existing.quantity + nextQuantity
+    : nextQuantity;
 
   cart.set(product.id, {
     productId: product.id,
@@ -164,17 +185,17 @@ app.post('/api/cart/items', (req, res) => {
   });
 
   res.status(201).json({
-    message: 'Added to cart.',
+    message: "Added to cart.",
     cart: getCartSummary(),
   });
 });
 
-app.patch('/api/cart/items/:productId', (req, res) => {
+app.patch("/api/cart/items/:productId", (req, res) => {
   const productId = Number(req.params.productId);
   const current = cart.get(productId);
 
   if (!current) {
-    return res.status(404).json({ message: 'Cart item not found.' });
+    return res.status(404).json({ message: "Cart item not found." });
   }
 
   const quantity = Number(req.body?.quantity);
@@ -189,35 +210,35 @@ app.patch('/api/cart/items/:productId', (req, res) => {
   }
 
   res.json({
-    message: 'Cart updated.',
+    message: "Cart updated.",
     cart: getCartSummary(),
   });
 });
 
-app.delete('/api/cart/items/:productId', (req, res) => {
+app.delete("/api/cart/items/:productId", (req, res) => {
   cart.delete(Number(req.params.productId));
 
   res.json({
-    message: 'Cart item removed.',
+    message: "Cart item removed.",
     cart: getCartSummary(),
   });
 });
 
-app.delete('/api/cart', (_req, res) => {
+app.delete("/api/cart", (_req, res) => {
   cart.clear();
 
   res.json({
-    message: 'Cart cleared.',
+    message: "Cart cleared.",
     cart: getCartSummary(),
   });
 });
 
-app.post('/api/orders', (req, res) => {
+app.post("/api/orders", (req, res) => {
   const summary = getCartSummary();
-  const { customerName = '', email = '' } = req.body || {};
+  const { customerName = "", email = "" } = req.body || {};
 
   if (summary.itemCount === 0) {
-    return res.status(400).json({ message: 'Your cart is empty.' });
+    return res.status(400).json({ message: "Your cart is empty." });
   }
 
   const order = {
@@ -229,7 +250,9 @@ app.post('/api/orders', (req, res) => {
     subtotal: summary.subtotal,
     shipping: summary.shipping,
     tax: summary.tax,
-    total: Number((summary.subtotal + summary.shipping + summary.tax).toFixed(2)),
+    total: Number(
+      (summary.subtotal + summary.shipping + summary.tax).toFixed(2),
+    ),
     createdAt: new Date().toISOString(),
   };
 
@@ -237,17 +260,19 @@ app.post('/api/orders', (req, res) => {
   cart.clear();
 
   res.status(201).json({
-    message: 'Order placed successfully.',
+    message: "Order placed successfully.",
     order,
     cart: getCartSummary(),
   });
 });
 
-app.get('/api/orders/:orderNumber', (req, res) => {
-  const order = orders.find((entry) => entry.orderNumber === req.params.orderNumber);
+app.get("/api/orders/:orderNumber", (req, res) => {
+  const order = orders.find(
+    (entry) => entry.orderNumber === req.params.orderNumber,
+  );
 
   if (!order) {
-    return res.status(404).json({ message: 'Order not found.' });
+    return res.status(404).json({ message: "Order not found." });
   }
 
   res.json({ order });

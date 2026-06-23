@@ -16,17 +16,18 @@ const AppRoutes = () => {
     <>
       <Navbar />
       <main style={{ paddingTop: "64px" }}>
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/products" element={<Products />} />
-          <Route path="/cart" element={<Cart />} />
-          <Route path="/gallery" element={<Gallery />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/admin" element={<Admin />} />
-          <Route path="/faq" element={<FAQ />} />
-          <Route path="/payment" element={<Payment />} />
-        </Routes>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/products" element={<Products />} />
+        <Route path="/cart" element={<Cart />} />
+        <Route path="/gallery" element={<Gallery />} />
+        <Route path="/contact" element={<Contact />} />
+        {/* Route pour le dashboard admin */}
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/faq" element={<FAQ />} />
+        <Route path="/payment" element={<Payment />} />
+      </Routes>
       </main>
     </>
   );

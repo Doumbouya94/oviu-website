@@ -10,7 +10,6 @@ const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [cartCount, setCartCount] = useState(0);
-
   const location = useLocation();
   const { lang, setLang } = useLang();
 
@@ -27,67 +26,43 @@ const Navbar = () => {
     loadCartCount();
 
     const handleCartUpdate = () => loadCartCount();
-
     window.addEventListener(CART_UPDATED_EVENT, handleCartUpdate);
 
-    return () => {
-      window.removeEventListener(
-        CART_UPDATED_EVENT,
-        handleCartUpdate
-      );
-    };
+    return () => window.removeEventListener(CART_UPDATED_EVENT, handleCartUpdate);
   }, [location.pathname]);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-
+    const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const navLinks = [
-    { label: t.nav.home[lang], to: "/" },
-    { label: t.nav.about[lang], to: "/about" },
+    { label: t.nav.home[lang],     to: "/" },
+    { label: t.nav.about[lang],    to: "/about" },
     { label: t.nav.products[lang], to: "/products" },
-    { label: t.nav.gallery[lang], to: "/gallery" },
-    { label: t.nav.contact[lang], to: "/contact" },
+    { label: t.nav.gallery[lang],  to: "/gallery" },
+    { label: t.nav.contact[lang],  to: "/contact" },
   ];
 
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [location.pathname]);
-
-  const toggleLang = () => {
-    setLang((prev) => (prev === "en" ? "fr" : "en"));
-  };
+  const toggleLang = () => setLang((prev) => (prev === "en" ? "fr" : "en"));
 
   return (
     <nav className={`navbar${scrolled ? " navbar--scrolled" : ""}`}>
       <div className="navbar__container">
+        {/* Logo */}
         <Link to="/" className="navbar__logo">
-          <img
-            src={logo}
-            alt="OVIU logo icon"
-            className="navbar__logo-icon"
-          />
+          <img src={logo} alt="OVIU logo icon" className="navbar__logo-icon" />
           <span className="navbar__logo-text">OVIU</span>
         </Link>
 
+        {/* Desktop links */}
         <ul className="navbar__links">
-          {navLinks.filter(Boolean).map(({ label, to }) => (
+          {navLinks.map(({ label, to }) => (
             <li key={to}>
               <Link
                 to={to}
-                className={`navbar__link${
-                  location.pathname === to
-                    ? " navbar__link--active"
-                    : ""
-                }`}
+                className={`navbar__link${location.pathname === to ? " navbar__link--active" : ""}`}
                 onClick={() => setMenuOpen(false)}
               >
                 {label}
@@ -97,6 +72,7 @@ const Navbar = () => {
         </ul>
 
         <div className="navbar__right">
+          {/* Language Toggle*/}
           <button
             className="navbar__cta navbar__cta--lang"
             onClick={toggleLang}
@@ -105,25 +81,16 @@ const Navbar = () => {
             {lang === "en" ? "EN" : "FR"}
           </button>
 
-          <Link
-            to="/cart"
-            className="navbar__cta navbar__cta--cart"
-          >
+          {/* Cart */}
+          <Link to="/cart" className="navbar__cta navbar__cta--cart">
             <span>{t.nav.cart[lang]}</span>
-            <span className="navbar__cart-count">
-              {cartCount}
-            </span>
+            <span className="navbar__cart-count">{cartCount}</span>
           </Link>
         </div>
 
-        <Link to="/order" className="navbar__cta">
-          Order
-        </Link>
-
+        {/* Hamburger (mobile) */}
         <button
-          className={`navbar__hamburger${
-            menuOpen ? " open" : ""
-          }`}
+          className={`navbar__hamburger${menuOpen ? " open" : ""}`}
           onClick={() => setMenuOpen((prev) => !prev)}
           aria-label="Toggle menu"
           aria-expanded={menuOpen}
@@ -134,28 +101,20 @@ const Navbar = () => {
         </button>
       </div>
 
-      <div
-        className={`navbar__drawer${
-          menuOpen ? " navbar__drawer--open" : ""
-        }`}
-      >
+      {/* Mobile drawer */}
+      <div className={`navbar__drawer${menuOpen ? " navbar__drawer--open" : ""}`}>
         <ul className="navbar__drawer-links">
-          {navLinks.filter(Boolean).map(({ label, to }) => (
+          {navLinks.map(({ label, to }) => (
             <li key={to}>
               <Link
                 to={to}
-                className={`navbar__drawer-link${
-                  location.pathname === to
-                    ? " navbar__drawer-link--active"
-                    : ""
-                }`}
+                className={`navbar__drawer-link${location.pathname === to ? " navbar__drawer-link--active" : ""}`}
                 onClick={() => setMenuOpen(false)}
               >
                 {label}
               </Link>
             </li>
           ))}
-
           <li>
             <Link
               to="/cart"
@@ -163,13 +122,11 @@ const Navbar = () => {
               onClick={() => setMenuOpen(false)}
             >
               <span>{t.nav.cart[lang]}</span>
-              <span className="navbar__cart-count">
-                {cartCount}
-              </span>
+              <span className="navbar__cart-count">{cartCount}</span>
             </Link>
           </li>
-
           <li>
+           {/* Language Toggle Mobile */}
             <button
               className="navbar__cta navbar__cta--mobile navbar__cta--lang"
               onClick={() => {
