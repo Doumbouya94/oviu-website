@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useLocation } from "react-router-dom";
 import Navbar from "../components/layouts/NavBar";
 
 import Home from "../features/home/Home";
@@ -12,10 +12,13 @@ import FAQ from "../features/FAQ/FAQ";
 import Payment from "../features/payment/payment";
 
 const AppRoutes = () => {
+  const location = useLocation();
+  const isAdmin = location.pathname.startsWith("/admin");
+
   return (
     <>
-      <Navbar />
-      <main style={{ paddingTop: "64px" }}>
+      {!isAdmin && <Navbar />}
+      <main style={{ paddingTop: isAdmin ? "0" : "64px" }}>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />

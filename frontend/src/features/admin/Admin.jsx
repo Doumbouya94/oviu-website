@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { LayoutDashboard, ShoppingBag, Package, BarChart2, LogOut } from "lucide-react";
 import "./Admin.css";
 import ProductForm from "./Product-Form";
-import { notifyProductsUpdated } from "../../lib/api";
+import { api, notifyProductsUpdated, onOrdersUpdated, notifyOrdersUpdated } from "../../lib/api";
 
 const Admin = () => {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -130,64 +130,329 @@ const LoginPage = ({ onLogin }) => {
   );
 };
 
-// Vue d'ensemble
-const DashboardTab = () => (
-  <div>
-    <h1>Dashboard Overview</h1>
-    <div className="stats-grid">
-      <div className="stat-card">
-        <h3>Total Orders</h3>
-        <p className="stat-number">142</p>
-      </div>
-      <div className="stat-card">
-        <h3>Pending Orders</h3>
-        <p className="stat-number pending">23</p>
-      </div>
-      <div className="stat-card">
-        <h3>Completed Orders</h3>
-        <p className="stat-number completed">110</p>
-      </div>
-      <div className="stat-card">
-        <h3>Total Revenue</h3>
-        <p className="stat-number revenue">$8,540</p>
-      </div>
-    </div>
-  </div>
-);
+const POLL_INTERVAL_MS = 5000;
 
-// Liste des commandes
-const OrdersTab = () => {
-  const orders = [
-    { id: "#001", customer: "Jean Tremblay", product: "Custom T-Shirt", status: "pending", total: "$45.00" },
-    { id: "#002", customer: "Marie Côté", product: "Hoodie", status: "completed", total: "$90.00" },
-    { id: "#003", customer: "Alex Martin", product: "Tote Bag", status: "pending", total: "$25.00" },
-    { id: "#004", customer: "Sophie Leblanc", product: "Mug", status: "cancelled", total: "$18.00" },
-    { id: "#005", customer: "Lucas Roy", product: "3D Accessory", status: "completed", total: "$35.00" },
-  ];
+const formatMoney = (value) => `$${Number(value || 0).toFixed(2)}`;
+
+// Vue d'ensemble — shows today's activity only
+const DashboardTab = () => {
+  const [stats, setStats] = useState({
+    todayOrders: 0,
+    todayPending: 0,
+    todayCompleted: 0,
+    todayCancelled: 0,
+    todayRevenue: 0,
+  });
+  const [loadError, setLoadError] = useState("");
+
+  const loadStats = useCallback(async () => {
+    try {
+      const data = await api.getOrderStatsToday();
+      setStats(data);
+      setLoadError("");
+    } catch (err) {
+      setLoadError(err.message);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadStats();
+
+    // Poll periodically so new orders (placed from the storefront) and
+    // status changes (made by another admin) show up without a refresh.
+    const interval = setInterval(loadStats, POLL_INTERVAL_MS);
+    const unsubscribe = onOrdersUpdated(loadStats);
+
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+    };
+  }, [loadStats]);
+
+  const today = new Date().toLocaleDateString("en-CA", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
 
   return (
     <div>
-      <h1>Orders</h1>
+      <h1>Dashboard Overview</h1>
+      <p style={{ color: "#888", marginBottom: "1.5rem", fontSize: "0.9rem" }}>{today}</p>
+      {loadError && <p className="delete-error">{loadError}</p>}
+      <div className="stats-grid">
+        <div className="stat-card">
+          <h3>Today's Orders</h3>
+          <p className="stat-number">{stats.todayOrders}</p>
+        </div>
+        <div className="stat-card">
+          <h3>Today's Revenue</h3>
+          <p className="stat-number revenue">{formatMoney(stats.todayRevenue)}</p>
+        </div>
+        <div className="stat-card">
+          <h3>Pending Today</h3>
+          <p className="stat-number pending">{stats.todayPending}</p>
+        </div>
+        <div className="stat-card">
+          <h3>Completed Today</h3>
+          <p className="stat-number completed">{stats.todayCompleted}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Modal: View order detail
+const ViewOrderModal = ({ order, onClose }) => {
+  if (!order) return null;
+  return (
+    <div className="pf-overlay" onClick={onClose}>
+      <div className="view-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="pf-header">
+          <div>
+            <h2 className="pf-title">{order.orderNumber}</h2>
+            <p className="pf-subtitle">
+              {order.customerName || "—"} · {order.email || "—"}
+            </p>
+          </div>
+          <button className="pf-close" onClick={onClose}>✕</button>
+        </div>
+        <div className="view-modal-body">
+          <table className="admin-table">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Qty</th>
+                <th>Price</th>
+                <th>Line Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {order.items.map((item, i) => (
+                <tr key={`${item.productId}-${i}`}>
+                  <td>{item.name}</td>
+                  <td>{item.quantity}</td>
+                  <td>{formatMoney(item.price)}</td>
+                  <td>{formatMoney(item.lineTotal)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <dl style={{ marginTop: "1rem" }}>
+            <div>
+              <dt>Subtotal</dt>
+              <dd>{formatMoney(order.subtotal)}</dd>
+            </div>
+            <div>
+              <dt>Shipping</dt>
+              <dd>{formatMoney(order.shipping)}</dd>
+            </div>
+            <div>
+              <dt>Tax</dt>
+              <dd>{formatMoney(order.tax)}</dd>
+            </div>
+            <div className="cart-summary__total">
+              <dt>Total</dt>
+              <dd>{formatMoney(order.total)}</dd>
+            </div>
+          </dl>
+
+          <p style={{ marginTop: "1rem", fontSize: "0.85rem", color: "#888" }}>
+            Status: <span className={`status ${order.status}`}>{order.status}</span>
+            {" · "}
+            Placed: {new Date(order.createdAt).toLocaleString()}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Modal: Confirm delete order
+const DeleteOrderModal = ({ order, onConfirm, onCancel, isDeleting }) => {
+  if (!order) return null;
+  return (
+    <div className="pf-overlay" onClick={onCancel}>
+      <div className="confirm-modal" onClick={(e) => e.stopPropagation()}>
+        <h2 className="pf-title">Delete Order</h2>
+        <p className="confirm-msg">
+          Are you sure you want to delete order <strong>{order.orderNumber}</strong>?
+          This action cannot be undone.
+        </p>
+        <div className="confirm-actions">
+          <button className="pf-btn-cancel" onClick={onCancel} disabled={isDeleting}>
+            Cancel
+          </button>
+          <button className="btn-delete-confirm" onClick={onConfirm} disabled={isDeleting}>
+            {isDeleting ? "Deleting..." : "Yes, Delete"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Liste des commandes
+const OrdersTab = () => {
+  const [orders, setOrders] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+
+  const [viewingOrder, setViewingOrder] = useState(null);
+  const [deletingOrder, setDeletingOrder] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [actionError, setActionError] = useState("");
+  const [updatingStatusId, setUpdatingStatusId] = useState(null);
+
+  // Keep track of whether this is the very first load, so polling refreshes
+  // don't flash a "Loading orders..." row over the existing table.
+  const hasLoadedOnce = useRef(false);
+
+  const loadOrders = useCallback(async () => {
+    if (!hasLoadedOnce.current) setIsLoading(true);
+    try {
+      const data = await api.getOrders();
+      setOrders(data);
+      setLoadError("");
+    } catch (err) {
+      setLoadError(err.message);
+    } finally {
+      hasLoadedOnce.current = true;
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadOrders();
+
+    const interval = setInterval(loadOrders, POLL_INTERVAL_MS);
+    const unsubscribe = onOrdersUpdated(loadOrders);
+
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+    };
+  }, [loadOrders]);
+
+  const handleStatusChange = async (order, newStatus) => {
+    if (newStatus === order.status) return;
+    setUpdatingStatusId(order._id);
+    setActionError("");
+    try {
+      const updated = await api.updateOrderStatus(order._id, newStatus);
+      setOrders((prev) => prev.map((o) => (o._id === updated._id ? updated : o)));
+      notifyOrdersUpdated();
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setUpdatingStatusId(null);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingOrder) return;
+    setIsDeleting(true);
+    setActionError("");
+    try {
+      await api.deleteOrder(deletingOrder._id);
+      setOrders((prev) => prev.filter((o) => o._id !== deletingOrder._id));
+      setDeletingOrder(null);
+      notifyOrdersUpdated();
+    } catch (err) {
+      setActionError(err.message);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return (
+    <div>
+      {viewingOrder && (
+        <ViewOrderModal order={viewingOrder} onClose={() => setViewingOrder(null)} />
+      )}
+
+      {deletingOrder && (
+        <DeleteOrderModal
+          order={deletingOrder}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => { setDeletingOrder(null); setActionError(""); }}
+          isDeleting={isDeleting}
+        />
+      )}
+
+      <div className="tab-header">
+        <h1>Orders</h1>
+        {actionError && <p className="delete-error">{actionError}</p>}
+        {loadError && <p className="delete-error">{loadError}</p>}
+      </div>
+
       <table className="admin-table">
         <thead>
           <tr>
-            <th>Order ID</th>
+            <th>Order #</th>
             <th>Customer</th>
-            <th>Product</th>
+            <th>Items</th>
             <th>Status</th>
             <th>Total</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {orders.map(order => (
-            <tr key={order.id}>
-              <td>{order.id}</td>
-              <td>{order.customer}</td>
-              <td>{order.product}</td>
-              <td><span className={`status ${order.status}`}>{order.status}</span></td>
-              <td>{order.total}</td>
+          {isLoading ? (
+            <tr>
+              <td colSpan={6} style={{ textAlign: "center", padding: "1.5rem" }}>
+                Loading orders...
+              </td>
             </tr>
-          ))}
+          ) : orders.length === 0 ? (
+            <tr>
+              <td colSpan={6} style={{ textAlign: "center", padding: "1.5rem" }}>
+                No orders yet. They'll show up here as soon as a payment goes through.
+              </td>
+            </tr>
+          ) : (
+            orders.map((order) => (
+              <tr key={order._id}>
+                <td>{order.orderNumber}</td>
+                <td>{order.customerName || "—"}</td>
+                <td>
+                  {order.items.reduce((sum, item) => sum + item.quantity, 0)} item
+                  {order.items.reduce((sum, item) => sum + item.quantity, 0) === 1 ? "" : "s"}
+                </td>
+                <td>
+                  <select
+                    className={`status-select status ${order.status}`}
+                    value={order.status}
+                    disabled={updatingStatusId === order._id}
+                    onChange={(e) => handleStatusChange(order, e.target.value)}
+                  >
+                    <option value="pending">pending</option>
+                    <option value="completed">completed</option>
+                    <option value="cancelled">cancelled</option>
+                  </select>
+                </td>
+                <td>{formatMoney(order.total)}</td>
+                <td>
+                  <button
+                    className="btn-view"
+                    onClick={() => setViewingOrder(order)}
+                    title="View order details"
+                  >
+                    View
+                  </button>
+                  <button
+                    className="btn-delete"
+                    onClick={() => setDeletingOrder(order)}
+                    title="Delete order"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>
@@ -446,28 +711,67 @@ const ProductsTab = () => {
 };
 
 // Statistiques globales
-const StatsTab = () => (
-  <div>
-    <h1>Statistics</h1>
-    <div className="stats-grid">
-      <div className="stat-card">
-        <h3>Monthly Revenue</h3>
-        <p className="stat-number revenue">$2,340</p>
-      </div>
-      <div className="stat-card">
-        <h3>New Customers</h3>
-        <p className="stat-number">18</p>
-      </div>
-      <div className="stat-card">
-        <h3>Low Stock Items</h3>
-        <p className="stat-number pending">3</p>
-      </div>
-      <div className="stat-card">
-        <h3>Total Products</h3>
-        <p className="stat-number">24</p>
+const StatsTab = () => {
+  const [stats, setStats] = useState({
+    monthlyRevenue: 0,
+    avgOrderValue: 0,
+    totalProducts: 0,
+    lowStockItems: 0,
+  });
+  const [loadError, setLoadError] = useState("");
+
+  const loadStats = useCallback(async () => {
+    try {
+      const data = await api.getOrderStats();
+      setStats(data);
+      setLoadError("");
+    } catch (err) {
+      setLoadError(err.message);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadStats();
+
+    const interval = setInterval(loadStats, POLL_INTERVAL_MS);
+    const unsubscribe = onOrdersUpdated(loadStats);
+
+    return () => {
+      clearInterval(interval);
+      unsubscribe();
+    };
+  }, [loadStats]);
+
+  const currentMonth = new Date().toLocaleDateString("en-CA", {
+    month: "long",
+    year: "numeric",
+  });
+
+  return (
+    <div>
+      <h1>Statistics</h1>
+      <p style={{ color: "#888", marginBottom: "1.5rem", fontSize: "0.9rem" }}>{currentMonth}</p>
+      {loadError && <p className="delete-error">{loadError}</p>}
+      <div className="stats-grid">
+        <div className="stat-card">
+          <h3>Monthly Revenue</h3>
+          <p className="stat-number revenue">{formatMoney(stats.monthlyRevenue)}</p>
+        </div>
+        <div className="stat-card">
+          <h3>Avg Order Value</h3>
+          <p className="stat-number">{formatMoney(stats.avgOrderValue)}</p>
+        </div>
+        <div className="stat-card">
+          <h3>Low Stock Items</h3>
+          <p className="stat-number pending">{stats.lowStockItems}</p>
+        </div>
+        <div className="stat-card">
+          <h3>Total Products</h3>
+          <p className="stat-number">{stats.totalProducts}</p>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default Admin;

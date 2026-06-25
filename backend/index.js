@@ -9,8 +9,10 @@ import mongoose from "mongoose";
 import connectDB from "./config/db.js";
 import { login } from "./controllers/authController.js";
 import ProductRoutes from "./routes/productRoutes.js";
+import OrderRoutes from "./routes/orderRoutes.js";
 import Product from "./models/Products.js";
 import Payment from "./models/Payment.js";
+import Order from "./models/Order.js";
 
 connectDB();
 
@@ -23,8 +25,6 @@ const port = process.env.PORT || 3001;
 // panel (real products have a Mongo _id string, not a numeric id).
 
 const cart = new Map();
-const orders = [];
-let nextOrderNumber = 1001;
 
 app.use(cors());
 app.use(express.json());
@@ -34,6 +34,9 @@ app.post("/api/auth/login", login);
 
 // Product routes
 app.use("/api/products", ProductRoutes);
+
+// Order routes (admin: list/view/update status/delete + stats)
+app.use("/api/orders", OrderRoutes);
 
 // Looks up a real product in MongoDB by its _id. Returns null (instead of
 // throwing) when the id isn't a valid ObjectId, e.g. "1", "abc", etc.
@@ -153,50 +156,11 @@ app.delete("/api/cart", (_req, res) => {
   });
 });
 
-app.post("/api/orders", (req, res) => {
-  const summary = getCartSummary();
-  const { customerName = "", email = "" } = req.body || {};
-
-  if (summary.itemCount === 0) {
-    return res.status(400).json({ message: "Your cart is empty." });
-  }
-
-  const order = {
-    id: nextOrderNumber++,
-    orderNumber: `OVIU-${String(Date.now()).slice(-6)}-${String(nextOrderNumber - 1)}`,
-    customerName: String(customerName).trim(),
-    email: String(email).trim(),
-    items: summary.items,
-    subtotal: summary.subtotal,
-    shipping: summary.shipping,
-    tax: summary.tax,
-    total: Number(
-      (summary.subtotal + summary.shipping + summary.tax).toFixed(2),
-    ),
-    createdAt: new Date().toISOString(),
-  };
-
-  orders.push(order);
-  cart.clear();
-
-  res.status(201).json({
-    message: "Order placed successfully.",
-    order,
-    cart: getCartSummary(),
-  });
-});
-
-app.get("/api/orders/:orderNumber", (req, res) => {
-  const order = orders.find(
-    (entry) => entry.orderNumber === req.params.orderNumber,
-  );
-
-  if (!order) {
-    return res.status(404).json({ message: "Order not found." });
-  }
-
-  res.json({ order });
-});
+// NOTE: the old in-memory `/api/orders` demo endpoints (POST to create an
+// order, GET by orderNumber) were removed. Orders are now created in
+// MongoDB automatically once a payment succeeds (see POST /api/payments
+// below), and managed via the Order model through `OrderRoutes`
+// (GET/PATCH/DELETE at /api/orders, mounted above).
 
 // Stripe Payment Intent
 app.post("/api/create-payment-intent", async (req, res) => {
@@ -240,9 +204,12 @@ app.post("/api/payments", async (req, res) => {
       stripePaymentIntentId: paymentIntentId,
     });
     if (existing) {
+      const existingOrder = await Order.findOne({
+        stripePaymentIntentId: paymentIntentId,
+      });
       return res.json({
         message: "Payment already recorded.",
-        order: existing,
+        order: existingOrder || existing,
       });
     }
 
@@ -282,11 +249,36 @@ app.post("/api/payments", async (req, res) => {
       status: "succeeded",
     });
 
+    // Mirror the same data into the `orders` collection. This is the
+    // record the Admin dashboard actually manages (status changes,
+    // delete, stats) — it starts as "pending" so an admin can mark it
+    // "completed" once it's been fulfilled/shipped.
+    const order = await Order.create({
+      orderNumber,
+      customerName: String(customerName).trim(),
+      email: String(email).trim(),
+      items: summary.items.map((item) => ({
+        productId: String(item.productId),
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        lineTotal: item.lineTotal,
+      })),
+      subtotal: summary.subtotal,
+      shipping: summary.shipping,
+      tax: summary.tax,
+      total,
+      currency: paymentIntent.currency,
+      paymentId: payment._id,
+      stripePaymentIntentId: paymentIntentId,
+      status: "pending",
+    });
+
     cart.clear();
 
     res.status(201).json({
       message: "Payment recorded successfully.",
-      order: payment,
+      order,
     });
   } catch (error) {
     console.error("savePayment error:", error);

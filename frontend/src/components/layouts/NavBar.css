@@ -34,10 +34,26 @@
     flex-shrink: 0;
 }
 
+/* Clip container — border-radius + overflow:hidden must live here, not on <img> */
+.navbar__logo-icon-wrap {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    overflow: hidden;
+    flex-shrink: 0;
+    background-color: #d4b896;
+    /* matches the logo's beige so edges blend */
+}
+
 .navbar__logo-icon {
-    width: 36px;
-    height: 36px;
-    object-fit: contain;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* The logo image is square: icon top ~55%, letters bottom ~45%.
+       Scale up so the icon fills the circle, shift up to hide the letters. */
+    object-position: center 8%;
+    transform: scale(1.1);
+    transform-origin: center 22%;
 }
 
 .navbar__logo-text {

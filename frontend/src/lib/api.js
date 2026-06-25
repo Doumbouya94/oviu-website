@@ -57,6 +57,22 @@ export const api = {
       method: "POST",
       body: JSON.stringify({ customerName, email, paymentIntentId }),
     }),
+
+  // Orders (Admin dashboard: list/view/update status/delete + stats)
+  getOrders: (status) =>
+    request(status ? `/api/orders?status=${status}` : "/api/orders"),
+  getOrderById: (orderId) => request(`/api/orders/${orderId}`),
+  updateOrderStatus: (orderId, status) =>
+    request(`/api/orders/${orderId}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status }),
+    }),
+  deleteOrder: (orderId) =>
+    request(`/api/orders/${orderId}`, {
+      method: "DELETE",
+    }),
+  getOrderStats: () => request("/api/orders/stats"),
+  getOrderStatsToday: () => request("/api/orders/stats/today"),
 };
 
 export const CART_UPDATED_EVENT = "oviu-cart-updated";
@@ -97,5 +113,35 @@ export const onProductsUpdated = (callback) => {
   return () => {
     window.removeEventListener(PRODUCTS_UPDATED_EVENT, handler);
     productsChannel?.removeEventListener("message", handler);
+  };
+};
+
+// ---------------------------------------------------------------------------
+// Orders sync: lets any admin action (status change, delete) trigger an
+// immediate refresh in the dashboard, instead of waiting on the next
+// polling tick. Same same-tab / same-browser-different-tab coverage as the
+// products sync above.
+// ---------------------------------------------------------------------------
+export const ORDERS_UPDATED_EVENT = "oviu-orders-updated";
+
+const ordersChannel =
+  typeof window !== "undefined" && "BroadcastChannel" in window
+    ? new BroadcastChannel("oviu-orders")
+    : null;
+
+export const notifyOrdersUpdated = () => {
+  window.dispatchEvent(new Event(ORDERS_UPDATED_EVENT));
+  ordersChannel?.postMessage("updated");
+};
+
+export const onOrdersUpdated = (callback) => {
+  const handler = () => callback();
+
+  window.addEventListener(ORDERS_UPDATED_EVENT, handler);
+  ordersChannel?.addEventListener("message", handler);
+
+  return () => {
+    window.removeEventListener(ORDERS_UPDATED_EVENT, handler);
+    ordersChannel?.removeEventListener("message", handler);
   };
 };

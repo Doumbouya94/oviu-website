@@ -52,7 +52,9 @@ const Navbar = () => {
       <div className="navbar__container">
         {/* Logo */}
         <Link to="/" className="navbar__logo">
-          <img src={logo} alt="OVIU logo icon" className="navbar__logo-icon" />
+          <div className="navbar__logo-icon-wrap">
+            <img src={logo} alt="OVIU logo icon" className="navbar__logo-icon" />
+          </div>
           <span className="navbar__logo-text">OVIU</span>
         </Link>
 
