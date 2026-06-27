@@ -4,8 +4,11 @@ import Navbar from "../components/layouts/NavBar";
 import Home from "../features/home/Home";
 import About from "../features/about-us/About";
 import Products from "../features/products-page/Products";
+import Cart from "../features/cart/Cart";
 import Gallery from "../features/gallery-portfolio/Gallery";
 import Contact from "../features/contact-us/Contact";
+import Admin from "../features/admin/Admin";
+import FAQ from "../features/FAQ/FAQ";
 
 const AppRoutes = () => {
   return (
@@ -16,8 +19,12 @@ const AppRoutes = () => {
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/products" element={<Products />} />
+        <Route path="/cart" element={<Cart />} />
         <Route path="/gallery" element={<Gallery />} />
         <Route path="/contact" element={<Contact />} />
+        {/* Route pour le dashboard admin */}
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/faq" element={<FAQ />} />
       </Routes>
       </main>
     </>
