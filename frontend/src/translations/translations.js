@@ -5,7 +5,7 @@ export const t = {
     about: { en: "About Us", fr: "À propos" },
     products: { en: "Products", fr: "Produits" },
     gallery: { en: "Gallery", fr: "Galerie" },
-    contact: { en: "Contact", fr: "Contact" },
+    contact: { en: "Contact Us", fr: "Contact" },
     cart: { en: "Cart", fr: "Panier" },
   },
 
